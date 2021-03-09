@@ -1,0 +1,80 @@
+%YAML:1.0
+Camera.Iw: 1280
+Camera.Ih: 720
+
+# OCamCalib calibration results.
+# https://sites.google.com/site/scarabotix/ocamcalib-toolbox
+
+Camera.nrpol: 5
+Camera.nrinvpol: 11
+
+Camera.a0: -3.744591e+02
+Camera.a1: 0.000000e+00
+Camera.a2: 1.143673e-03
+Camera.a3: -1.254558e-06
+Camera.a4: 2.643700e-09
+
+Camera.pol0: 547.487836
+Camera.pol1: 294.421685
+Camera.pol2: -20.323954
+Camera.pol3: 49.860274
+Camera.pol4: 17.524706
+Camera.pol5: -5.503021
+Camera.pol6: 24.871282
+Camera.pol7: 14.021810
+Camera.pol8: -16.615209
+Camera.pol9: -14.709455
+Camera.pol10: -3.108127
+
+Camera.c: 0.999878
+Camera.d: -0.000145
+Camera.e: -0.000033
+
+Camera.u0: 628.670093
+Camera.v0: 355.683942
+
+##################################################
+
+Camera.fov: 185
+
+CubeFace.h: 650
+CubeFace.w: 650
+
+Camera.fps: 25.0
+Camera.RGB: 1
+
+# Modify nFeatures depending on performance.
+ORBextractor.nFeatures: 4000
+ORBextractor.scaleFactor: 1.2
+ORBextractor.nLevels: 8
+#if there is a mask
+Camera.withFisheyeMask: 1
+
+# ORB Extractor: Fast threshold
+# Image is divided in a grid. At each cell FAST are extracted imposing a minimum response.
+# Firstly we impose iniThFAST. If no corners are detected we impose a lower value minThFAST
+# You can lower these values if your images have low contrast			
+ORBextractor.iniThFAST: 20
+ORBextractor.minThFAST: 7
+
+#--------------------------------------------------------------------------------------------
+# Viewer Parameters
+#--------------------------------------------------------------------------------------------
+Viewer.KeyFrameSize: 0.1
+Viewer.KeyFrameLineWidth: 1
+Viewer.GraphLineWidth: 1
+Viewer.PointSize: 2
+Viewer.CameraSize: 0.15
+Viewer.CameraLineWidth: 2
+Viewer.ViewpointX: 0
+Viewer.ViewpointY: -10
+Viewer.ViewpointZ: -0.1
+Viewer.ViewpointF: 2000
+
+FrameDrawer.MarginX: 260
+FrameDrawer.MarginY: 480
+
+#--------------------------------------------------------------------------------------------
+# Map Parapeters
+#--------------------------------------------------------------------------------------------
+Map.mapfile: map.bin
