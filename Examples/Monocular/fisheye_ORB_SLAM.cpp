@@ -8,6 +8,8 @@
 
 #include "System.h"
 
+#include <sys/time.h>
+
 using namespace std;
 using namespace cv;
 /* track on off */
@@ -25,7 +27,7 @@ int main(int argc, char **argv)
     VideoCapture cap("/home/cgv/Desktop/dataset/vadas/2019.mp4");
     double delay = 1000.0 / cap.get(CV_CAP_PROP_FPS);
 
-    int start = 35;
+    int start = 0;
     cap.set(CV_CAP_PROP_POS_MSEC, (double)start * 1000);
 
     Mat mask = imread("/home/cgv/Desktop/github/O2RB_SLAM/Examples/Monocular/mask_fisheye.png", IMREAD_GRAYSCALE);
@@ -45,12 +47,14 @@ int main(int argc, char **argv)
 
     // Main loop
     cv::Mat im;
-
+    for(int i=0; i<400; i++) cap >> im;
     while (true)
     {
+        struct timeval start = {};
+        gettimeofday(&start, NULL);
+
         // Read image from file
         cap >> im; 
-        cap.grab();
 
         if (im.empty())
         {
@@ -60,6 +64,14 @@ int main(int argc, char **argv)
         }
         // Pass the image to the SLAM system
         SLAM.TrackMonocular(im, mask, delay, LUT);
+
+        struct timeval end = {};
+        gettimeofday(&end, NULL);
+
+        double time = (end.tv_sec - start.tv_sec)*1000.0  + ( end.tv_usec -start.tv_usec) /1000.0;
+        FILE * fp_ = fopen("/home/cgv/Desktop/github/O2RB_time1.csv", "a");
+        fprintf(fp_, "%lf, %lf\n", cap.get(CV_CAP_PROP_POS_FRAMES), time);
+        fclose(fp_);
     }
 
     // Stop all threads

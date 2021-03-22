@@ -87,7 +87,7 @@ void Viewer::Run()
     pangolin::OpenGlMatrix Twc;
     Twc.SetIdentity();
 
-    cv::namedWindow("ORB-SLAM2: Current Frame");
+    //cv::namedWindow("ORB-SLAM2: Current Frame");
 
     bool bFollow = true;
     bool bLocalizationMode = false;
@@ -134,12 +134,14 @@ void Viewer::Run()
 
         pangolin::FinishFrame();
 
-        cv::Mat im = mpFrameDrawer->DrawFrame();
-        cv::Mat im_resize; int rows = im.rows / 2; int cols = im.cols / 2;
-        cv::resize(im, im_resize, cv::Size(cols, rows), 0, 0, CV_INTER_LINEAR );
-        cv::imshow("ORB-SLAM2: Current Frame",im_resize);
-        //cv::waitKey(mT);
-        cv::waitKey(1);
+        // cv::Mat im = mpFrameDrawer->DrawFrame();
+        // changed
+        // cv::Mat im_resize; int rows = im.rows; int cols = im.cols;
+        // // original : cv::Mat im_resize; int rows = im.rows / 2; int cols = im.cols / 2;
+        // cv::resize(im, im_resize, cv::Size(cols, rows), 0, 0, CV_INTER_LINEAR );
+        // cv::imshow("ORB-SLAM2: Current Frame",im_resize);
+        // //cv::waitKey(mT);
+        // cv::waitKey(1);
 
         if(menuReset)
         {
