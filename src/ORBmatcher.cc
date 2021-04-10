@@ -1401,13 +1401,14 @@ float ORBmatcher::norm_vector3f(float x, float y, float z)
 }
 
 /* sphere 3*/
-int ORBmatcher::SearchByProjection(Frame &CurrentFrame, const Frame &LastFrame, const float th, const bool bMono)
+int ORBmatcher::SearchByProjection(std::vector<int> &vnMatches12, Frame &CurrentFrame, const Frame &LastFrame, const float th, const bool bMono)
 {
     int nmatches = 0;
 
     // Rotation Histogram (to check rotation consistency)
-    vector<int> rotHist[HISTO_LENGTH];
-    for(int i=0;i<HISTO_LENGTH;i++)
+    int nBinsAngle = std::ceil(360.0f/HISTO_LENGTH);
+    vector<int> rotHist[nBinsAngle];
+    for(int i=0;i<nBinsAngle;i++)
         rotHist[i].reserve(500);
     const float factor = 1.0f/HISTO_LENGTH;
 
@@ -1454,14 +1455,40 @@ int ORBmatcher::SearchByProjection(Frame &CurrentFrame, const Frame &LastFrame, 
                     continue;
                 if(uv_isin_(1)<CurrentFrame.mnMinY || uv_isin_(1)>CurrentFrame.mnMaxY)
                     continue;
-
+                
                 int nLastOctave = LastFrame.mvKeys[i].octave;
+ 
 
                 // Search in a window. Size depends on scale
                 float radius = th*CurrentFrame.mvScaleFactors[nLastOctave];
+                // ej_for_debug
+        
+                cv::Mat cur;
+                CurrentFrame.img.copyTo(cur);
+
+                // cv::cvtColor(m_result, m_result, CV_GRAY2BGR);
+
+                // for(int i=0; i<vnMatches12.size(); i++)
+                // {
+                //     if(vnMatches12[i]!=-1)
+                //     {
+                //      cv::Scalar color(rand() % 256, rand() % 256, rand() % 256);
+                        
+                //         cv::circle(m_result, mLastFrame.mvKeys[vnMatches12[i]].pt, 4, color, 2);
+                //         cv::circle(m_result, mCurrentFrame.mvKeys[i].pt+ cv::Point2f(mLastFrame.img.cols, 0), 4, color, 2);
+                //         cv::line(m_result, mCurrentFrame.mvKeys[i].pt+ cv::Point2f(mCurrentFrame.img.cols, 0), mLastFrame.mvKeys[vnMatches12[i]].pt, color, 2);
+                //     }
+                // }
+                // cv::resize(m_result, m_result, cv::Size(), 0.65, 0.65);
+                float xx, yy;
+                xx = uv_isin_(0);
+                yy = uv_isin_(1);
+                cv::circle(cur, cv::Point(xx, yy), 4, (255,0,0), 2);
+                cv::circle(cur, cv::Point(xx, yy), radius, (255,0,0), 2);
+
 
                 vector<size_t> vIndices2;
-                    vIndices2 = CurrentFrame.GetFeaturesInArea(uv_isin_(0),uv_isin_(1), radius, nLastOctave-1, nLastOctave+1);
+                vIndices2 = CurrentFrame.GetFeaturesInArea(uv_isin_(0),uv_isin_(1), radius, nLastOctave-1, nLastOctave+1);
 
                 if(vIndices2.empty())
                     continue;
@@ -1478,6 +1505,7 @@ int ORBmatcher::SearchByProjection(Frame &CurrentFrame, const Frame &LastFrame, 
                         if(CurrentFrame.mvpMapPoints[i2]->Observations()>0)
                             continue;
 
+                    cv::circle(cur, CurrentFrame.mvKeys[i2].pt, 4, (255,0,0), 2);
 
                     const cv::Mat &d = CurrentFrame.mDescriptors.row(i2);
 
@@ -1490,8 +1518,12 @@ int ORBmatcher::SearchByProjection(Frame &CurrentFrame, const Frame &LastFrame, 
                     }
                 }
 
+                // cv::imshow("cur key", cur);
+                // cv::waitKey(0);
+
                 if(bestDist<=TH_HIGH)
                 {
+                    vnMatches12[bestIdx2] = i;
                     CurrentFrame.mvpMapPoints[bestIdx2]=pMP;
                     nmatches++;
 
@@ -1501,9 +1533,9 @@ int ORBmatcher::SearchByProjection(Frame &CurrentFrame, const Frame &LastFrame, 
                         if(rot<0.0)
                             rot+=360.0f;
                         int bin = round(rot*factor);
-                        if(bin==HISTO_LENGTH)
+                        if(bin==nBinsAngle)
                             bin=0;
-                        assert(bin>=0 && bin<HISTO_LENGTH);
+                        assert(bin>=0 && bin<nBinsAngle);
                         rotHist[bin].push_back(bestIdx2);
                     }
                 }
@@ -1518,14 +1550,15 @@ int ORBmatcher::SearchByProjection(Frame &CurrentFrame, const Frame &LastFrame, 
         int ind2=-1;
         int ind3=-1;
 
-        ComputeThreeMaxima(rotHist,HISTO_LENGTH,ind1,ind2,ind3);
+        ComputeThreeMaxima(rotHist,nBinsAngle,ind1,ind2,ind3);
 
-        for(int i=0; i<HISTO_LENGTH; i++)
+        for(int i=0; i<nBinsAngle; i++)
         {
             if(i!=ind1 && i!=ind2 && i!=ind3)
             {
                 for(size_t j=0, jend=rotHist[i].size(); j<jend; j++)
                 {
+                    vnMatches12[rotHist[i][j]] = -1;
                     CurrentFrame.mvpMapPoints[rotHist[i][j]]=static_cast<MapPoint*>(NULL);
                     nmatches--;
                 }
@@ -1536,7 +1569,7 @@ int ORBmatcher::SearchByProjection(Frame &CurrentFrame, const Frame &LastFrame, 
     cout << "befor [SearchByProjection 3] orgin pt num:: " << LastFrame.N << endl;
     cout << "after [SearchByProjection 3] nToMatch.size():: " << nmatches << endl;
     #endif
-
+    printf("%d\n", nmatches);
     return nmatches;
 }
 

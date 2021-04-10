@@ -48,7 +48,7 @@ public:
    void add(KeyFrame* pKF);
 
    void erase(KeyFrame* pKF);
-
+   int getSize();
    void clear();
 
    // Loop Detection

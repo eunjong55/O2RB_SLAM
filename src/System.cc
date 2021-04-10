@@ -293,7 +293,7 @@ cv::Mat System::TrackMonocular(const cv::Mat &im, const double &timestamp)
 
 
 // Proccess the given monocular frame with mask 
-cv::Mat System::TrackMonocular(const cv::Mat &im, const cv::Mat &mask, const double &timestamp, std::vector<cv::Mat> LUT)
+cv::Mat System::TrackMonocular(cv::Mat &cube_mask, cv::Mat &cube, const cv::Mat &im, const cv::Mat &mask, const double &timestamp, std::vector<cv::Mat> LUT)
 {
 
     if (mSensor != MONOCULAR)
@@ -336,7 +336,7 @@ cv::Mat System::TrackMonocular(const cv::Mat &im, const cv::Mat &mask, const dou
         }
     }
     
-    cv::Mat Tcw = mpTracker->GrabImageMonocular(im, mask, timestamp, LUT);
+    cv::Mat Tcw = mpTracker->GrabImageMonocular(cube_mask, cube, im, mask, timestamp, LUT);
 
     unique_lock<mutex> lock2(mMutexState);
     mTrackingState = mpTracker->mState;

@@ -60,7 +60,7 @@ class ExtractorNode
 						std::vector<cv::KeyPoint> &keypoints,
 						cv::OutputArray descriptors);
 
-		void operator()(cv::InputArray image, cv::InputArray mask,
+		void operator()(cv::InputArray cube_mask, cv::InputArray cube, cv::InputArray image, cv::InputArray mask,
 			std::vector<cv::KeyPoint>& keypoints,
 			cv::OutputArray descriptors, cv::InputArray _LUT_x, cv::InputArray _LUT_y, cv::InputArray _LUT_x_inv, cv::InputArray _LUT_y_inv);
 
@@ -95,16 +95,18 @@ class ExtractorNode
 		}
 
 		std::vector<cv::Mat> mvImagePyramid;
+		std::vector<cv::Mat> mvCubePyramid;
+
 		std::vector<cv::Mat> mvMaskPyramid;
 
 	protected:
 		void ComputePyramid(cv::Mat image);
 		// With mask
-		void ComputePyramid(cv::Mat image, cv::Mat mask, std::vector<cv::Mat>& masks);
+		void ComputePyramid(cv::Mat cube_mask, std::vector<cv::Mat>& cube_masks, cv::Mat cube, cv::Mat image, cv::Mat mask, std::vector<cv::Mat>& masks);
 
 		void ComputeKeyPointsOctTree(std::vector<std::vector<cv::KeyPoint>>& allKeypoints);
 		// With mask
-		void ComputeKeyPointsOctTree(std::vector<std::vector<cv::KeyPoint> >& allKeypoints, std::vector<cv::Mat> masks);
+		void ComputeKeyPointsOctTree(float scale, std::vector<std::vector<cv::KeyPoint> >& allKeypoints, std::vector<cv::Mat> masks);
 
 		std::vector<cv::KeyPoint> DistributeOctTree(const std::vector<cv::KeyPoint>& vToDistributeKeys, const int& minX,
 			const int& maxX, const int& minY, const int& maxY, const int& nFeatures, const int& level);

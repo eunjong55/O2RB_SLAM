@@ -76,10 +76,11 @@ const int PATCH_SIZE = 31;
 const int HALF_PATCH_SIZE = 15;
 const int EDGE_THRESHOLD = 19;
 
-static float IC_Angle(const Mat &image, Point2f pt, const vector<int> &u_max)
+static float IC_Angle(float scale, const Mat &image, Point2f pt, const vector<int> &u_max)
 {
     int m_01 = 0, m_10 = 0;
-
+    // float fishX, fishY;
+    // CamModelGeneral::GetCamera()->FisheyeToCubemap(pt.x*scale, pt.y*scale, fishX, fishY);
     const uchar *center = &image.at<uchar>(cvRound(pt.y), cvRound(pt.x));
 
     // Treat the center line differently, v=0
@@ -109,105 +110,88 @@ const float factorPI = (float)(CV_PI / 180.f);
 
 static void computeOrbDescriptor(const KeyPoint& kpt, const Point2f& kpt_C, const Mat& img, const Point* pattern, uchar* desc, float scale)
 	{
-		float py2originX = kpt.pt.x * (1 - scale);//p-P
-		float py2originY = kpt.pt.y * (1 - scale);
+    float angle = (float)kpt.angle*factorPI;
+    float a = (float)cos(angle), b = (float)sin(angle);
 
-		float fAngleRad = (float)kpt.angle * factorPI;
-		cv::Point2f orientF(kpt.pt.x + cos(fAngleRad) - py2originX, kpt.pt.y + sin(fAngleRad)- py2originY);
+    const uchar* center = &img.at<uchar>(cvRound(kpt.pt.y), cvRound(kpt.pt.x));
+    const int step = (int)img.step;
 
-		float orientX, orientY;
-		CamModelGeneral::GetCamera()->FisheyeToCubemap(orientF.x, orientF.y, orientX, orientY);
-		cv::Point2f orientP((orientX - kpt_C.x), (orientY - kpt_C.y));
-		orientP /= norm(orientP);
-		float a = orientP.x, b = orientP.y;//a = cosTH / b = sinTH
+    #define GET_VALUE(idx) \
+        center[cvRound(pattern[idx].x*b + pattern[idx].y*a)*step + \
+               cvRound(pattern[idx].x*a - pattern[idx].y*b)]
 
 
-		for (int i = 0; i < 32; ++i, pattern += 16)
-		{
-			int idx, t0, t1, val = 0;
+    for (int i = 0; i < 32; ++i, pattern += 16)
+    {
+        int t0, t1, val;
+        t0 = GET_VALUE(0); t1 = GET_VALUE(1);
+        val = t0 < t1;
+        t0 = GET_VALUE(2); t1 = GET_VALUE(3);
+        val |= (t0 < t1) << 1;
+        t0 = GET_VALUE(4); t1 = GET_VALUE(5);
+        val |= (t0 < t1) << 2;
+        t0 = GET_VALUE(6); t1 = GET_VALUE(7);
+        val |= (t0 < t1) << 3;
+        t0 = GET_VALUE(8); t1 = GET_VALUE(9);
+        val |= (t0 < t1) << 4;
+        t0 = GET_VALUE(10); t1 = GET_VALUE(11);
+        val |= (t0 < t1) << 5;
+        t0 = GET_VALUE(12); t1 = GET_VALUE(13);
+        val |= (t0 < t1) << 6;
+        t0 = GET_VALUE(14); t1 = GET_VALUE(15);
+        val |= (t0 < t1) << 7;
 
-			for (int j = 0; j < 8; j++)
-			{
-				idx = j * 2;
-				double fishX, fishY;
-				CamModelGeneral::GetCamera()->CubemapToFisheye(fishX, fishY, static_cast<double>(kpt_C.x + (pattern[idx].x * a - pattern[idx].y * b)), static_cast<double>(kpt_C.y + (pattern[idx].x * b + pattern[idx].y * a)));//cube2fish(fish <- cube)
-				t0 = img.at<uchar>(fishY + py2originY, fishX + py2originX);
+        desc[i] = (uchar)val;
+    }
 
-
-
-				idx = j * 2 + 1;
-				CamModelGeneral::GetCamera()->CubemapToFisheye(fishX, fishY, static_cast<double>(kpt_C.x + (pattern[idx].x * a - pattern[idx].y * b)), static_cast<double>(kpt_C.y + (pattern[idx].x * b + pattern[idx].y * a)));//cube2fish(fish <- cube)
-				t1 = img.at<uchar>(fishY + py2originY, fishX + py2originX);
-
-				if (j == 0) {
-					val = t0 < t1;
-				}
-				else {
-					val |= (t0 < t1) << j;
-				}
-			}
-
-
-			desc[i] = (uchar)val;
-		}
-
+    #undef GET_VALUE
 	}
 
 	static void computeOrbDescriptor(const KeyPoint& kpt, const Point2f& kpt_C, const Mat& img, const Point* pattern, uchar* desc, float scale, const Mat LUT_x, const Mat LUT_y, const Mat LUT_x_inv, const Mat LUT_y_inv)
 	{
-		float py2originX = kpt.pt.x * (1 - scale);//p-P
-		float py2originY = kpt.pt.y * (1 - scale);
-
-		float fAngleRad = (float)kpt.angle * factorPI;
-		// cv::Point2f orientF(kpt.pt.x + cos(fAngleRad) - py2originX, kpt.pt.y + sin(fAngleRad)- py2originY);
-		cv::Point2f orientF(kpt.pt.x*scale + cos(fAngleRad), kpt.pt.y*scale + sin(fAngleRad));
-
-		float orientX, orientY;
-		CamModelGeneral::GetCamera()->FisheyeToCubemap(orientF.x, orientF.y, orientX, orientY);
-
-		cv::Point2f orientP((orientX - kpt_C.x), (orientY - kpt_C.y));
-		orientP /= norm(orientP);
-		float a = orientP.x, b = orientP.y;//a = cosTH / b = sinTH
 
 
-		for (int i = 0; i < 32; ++i, pattern += 16)
-		{
-			int idx, t0, t1, val = 0;
+        float fishX, fishY;
+        CamModelGeneral::GetCamera()->FisheyeToCubemap(kpt.pt.x*scale, kpt.pt.y*scale, fishX, fishY);
+        fishX*=(1/scale);
+        fishY*=(1/scale);
 
-			for (int j = 0; j < 8; j++)
-			{
-				idx = j * 2;
-				double fishX, fishY;
-				Point2f P_left = Point(kpt_C.x + (pattern[idx].x * a - pattern[idx].y * b), kpt_C.y + (pattern[idx].x * b + pattern[idx].y * a));
-				// CamModelGeneral::GetCamera()->CubemapToFisheye(fishX, fishY, static_cast<double>(kpt_C.x + (pattern[idx].x * a - pattern[idx].y * b)), static_cast<double>(kpt_C.y + (pattern[idx].x * b + pattern[idx].y * a)));//cube2fish(fish <- cube)
-				fishX = LUT_x.at<float>(P_left.y, P_left.x);
-				fishY = LUT_y.at<float>(P_left.y, P_left.x);
+        float angle = (float)kpt.angle*factorPI;
+        float a = (float)cos(angle), b = (float)sin(angle);
 
-				t0 = img.at<uchar>(fishY + py2originY, fishX + py2originX);
+        const uchar* center = &img.at<uchar>(cvRound(fishY), cvRound(fishX));
+    //    const uchar* center = &img.at<uchar>(cvRound(kpt.pt.y), cvRound(kpt.pt.x));
+        const int step = (int)img.step;
 
-
-
-				idx = j * 2 + 1;
-				Point2f P_right = Point(kpt_C.x + (pattern[idx].x * a - pattern[idx].y * b), kpt_C.y + (pattern[idx].x * b + pattern[idx].y * a));
- 				//CamModelGeneral::GetCamera()->CubemapToFisheye(fishX, fishY, static_cast<double>(kpt_C.x + (pattern[idx].x * a - pattern[idx].y * b)), static_cast<double>(kpt_C.y + (pattern[idx].x * b + pattern[idx].y * a)));//cube2fish(fish <- cube)
-				fishX = LUT_x.at<float>(P_right.y, P_right.x);
-				fishY = LUT_y.at<float>(P_right.y, P_right.x);
-
-				t1 = img.at<uchar>(fishY + py2originY, fishX + py2originX);
+        #define GET_VALUE(idx) \
+            center[cvRound(pattern[idx].x*b + pattern[idx].y*a)*step + \
+                cvRound(pattern[idx].x*a - pattern[idx].y*b)]
 
 
+        for (int i = 0; i < 32; ++i, pattern += 16)
+        {
+            int t0, t1, val;
+            t0 = GET_VALUE(0); t1 = GET_VALUE(1);
+            val = t0 < t1;
+            t0 = GET_VALUE(2); t1 = GET_VALUE(3);
+            val |= (t0 < t1) << 1;
+            t0 = GET_VALUE(4); t1 = GET_VALUE(5);
+            val |= (t0 < t1) << 2;
+            t0 = GET_VALUE(6); t1 = GET_VALUE(7);
+            val |= (t0 < t1) << 3;
+            t0 = GET_VALUE(8); t1 = GET_VALUE(9);
+            val |= (t0 < t1) << 4;
+            t0 = GET_VALUE(10); t1 = GET_VALUE(11);
+            val |= (t0 < t1) << 5;
+            t0 = GET_VALUE(12); t1 = GET_VALUE(13);
+            val |= (t0 < t1) << 6;
+            t0 = GET_VALUE(14); t1 = GET_VALUE(15);
+            val |= (t0 < t1) << 7;
 
-				if (j == 0) {
-					val = t0 < t1;
-				}
-				else {
-					val |= (t0 < t1) << j;
-				}
-			}
+            desc[i] = (uchar)val;
+        }
 
-
-			desc[i] = (uchar)val;
-		}
+        #undef GET_VALUE
 	}
     // static void computeOrbDescriptor(const KeyPoint& kpt, const Point2f& kpt_C, const Mat& img, const Point* pattern, uchar* desc, float scale, const Mat LUT_x, const Mat LUT_y, const Mat LUT_x_inv, const Mat LUT_y_inv)
 	// {
@@ -556,6 +540,7 @@ ORBextractor::ORBextractor(int _nfeatures, float _scaleFactor, int _nlevels,
     }
 
     mvImagePyramid.resize(nlevels);
+    mvCubePyramid.resize(nlevels);
 
     mnFeaturesPerLevel.resize(nlevels);
     float factor = 1.0f / scaleFactor;
@@ -594,13 +579,13 @@ ORBextractor::ORBextractor(int _nfeatures, float _scaleFactor, int _nlevels,
     }
 }
 
-static void computeOrientation(const Mat &image, vector<KeyPoint> &keypoints, const vector<int> &umax)
+static void computeOrientation(float scale, const Mat &image, vector<KeyPoint> &keypoints, const vector<int> &umax)
 {
     for (vector<KeyPoint>::iterator keypoint = keypoints.begin(),
                                     keypointEnd = keypoints.end();
          keypoint != keypointEnd; ++keypoint)
     {
-        keypoint->angle = IC_Angle(image, keypoint->pt, umax);
+        keypoint->angle = IC_Angle(scale, image, keypoint->pt, umax);
     }
 }
 
@@ -969,13 +954,13 @@ void ORBextractor::ComputeKeyPointsOctTree(vector<vector<KeyPoint>> &allKeypoint
             keypoints[i].size = scaledPatchSize;
         }
     }
-
+    float scale;
     // compute orientations
     for (int level = 0; level < nlevels; ++level)
-        computeOrientation(mvImagePyramid[level], allKeypoints[level], umax);
+        computeOrientation(scale, mvImagePyramid[level], allKeypoints[level], umax);
 }
 
-void ORBextractor::ComputeKeyPointsOctTree(vector<vector<KeyPoint>> &allKeypoints, std::vector<cv::Mat> masks)
+void ORBextractor::ComputeKeyPointsOctTree(float scale, vector<vector<KeyPoint>> &allKeypoints, std::vector<cv::Mat> masks)
 {
     allKeypoints.resize(nlevels);
 
@@ -1050,7 +1035,6 @@ void ORBextractor::ComputeKeyPointsOctTree(vector<vector<KeyPoint>> &allKeypoint
 
         keypoints = DistributeOctTree(vToDistributeKeys, minBorderX, maxBorderX,
                                       minBorderY, maxBorderY, mnFeaturesPerLevel[level], level);
-
         const int scaledPatchSize = PATCH_SIZE * mvScaleFactor[level];
 
         // Add border to coordinates and scale information
@@ -1066,7 +1050,7 @@ void ORBextractor::ComputeKeyPointsOctTree(vector<vector<KeyPoint>> &allKeypoint
 
     // compute orientations
     for (int level = 0; level < nlevels; ++level)
-        computeOrientation(mvImagePyramid[level], allKeypoints[level], umax);
+        computeOrientation(scale, mvCubePyramid[level], allKeypoints[level], umax);
 }
 
 void ORBextractor::ComputeKeyPointsOld(std::vector<std::vector<KeyPoint>> &allKeypoints)
@@ -1235,10 +1219,10 @@ void ORBextractor::ComputeKeyPointsOld(std::vector<std::vector<KeyPoint>> &allKe
             keypoints.resize(nDesiredFeatures);
         }
     }
-
+    float scale;
     // and compute orientations
     for (int level = 0; level < nlevels; ++level)
-        computeOrientation(mvImagePyramid[level], allKeypoints[level], umax);
+        computeOrientation(scale, mvImagePyramid[level], allKeypoints[level], umax);
 }
 
 static void computeDescriptors(const Mat &image, vector<KeyPoint> &keypoints, vector<Point2f> keypoints_C, Mat &descriptors,
@@ -1290,8 +1274,9 @@ static void computeDescriptors(const Mat &image, vector<KeyPoint> &keypoints, ve
 		}
 		else
 		{
-			ComputePyramid(image, mask, masks);
-			ComputeKeyPointsOctTree(allKeypoints, masks);
+            float s;
+			ComputePyramid(mask, masks, image, image, mask, masks);
+			ComputeKeyPointsOctTree(s, allKeypoints, masks);
 		}
 
 		//////////////////////////////////////////////////////////////////
@@ -1357,7 +1342,7 @@ static void computeDescriptors(const Mat &image, vector<KeyPoint> &keypoints, ve
 			assert(keypoints.size() == keypoints_new.size() && "ORBExtractor: keypoints should share the same size as keypooints_new");
 			
 			// preprocess the resized image
-			Mat workingMat = mvImagePyramid[level].clone();
+			Mat workingMat = mvCubePyramid[level].clone();
 			GaussianBlur(workingMat, workingMat, Size(7, 7), 2, 2, BORDER_REFLECT_101);
 
 			// Compute the descriptors
@@ -1408,7 +1393,7 @@ void ORBextractor::ComputePyramid(cv::Mat image)
 }
 
 
-void ORBextractor::operator()(InputArray _image, InputArray _mask, vector<KeyPoint>& _keypoints,
+void ORBextractor::operator()(InputArray _cube_mask, InputArray _cube, InputArray _image, InputArray _mask, vector<KeyPoint>& _keypoints,
 		OutputArray _descriptors, InputArray _LUT_x, InputArray _LUT_y, InputArray _LUT_x_inv, InputArray _LUT_y_inv)
 	{
 
@@ -1418,8 +1403,14 @@ void ORBextractor::operator()(InputArray _image, InputArray _mask, vector<KeyPoi
 		Mat image = _image.getMat();
 		assert(image.type() == CV_8UC1);
 
+        Mat cube = _cube.getMat();
+        assert(cube.type() == CV_8UC1);
+
 		Mat mask = _mask.getMat();
 		assert(mask.type() == CV_8UC1);
+
+        Mat cube_mask = _cube_mask.getMat();
+		assert(cube_mask.type() == CV_8UC1);
 
 		Mat LUT_x = _LUT_x.getMat();
 		assert(mask.type() == CV_8UC1);
@@ -1440,6 +1431,7 @@ void ORBextractor::operator()(InputArray _image, InputArray _mask, vector<KeyPoi
 
 
 		std::vector<cv::Mat> masks;
+        std::vector<cv::Mat> cube_masks;
 		vector<vector<KeyPoint>> allKeypoints;
 
 		if (mask.empty())
@@ -1449,8 +1441,9 @@ void ORBextractor::operator()(InputArray _image, InputArray _mask, vector<KeyPoi
 		}
 		else
 		{
-			ComputePyramid(image, mask, masks);
-			ComputeKeyPointsOctTree(allKeypoints, masks);
+            float s;
+			ComputePyramid(cube_mask, cube_masks, cube, image, mask, masks);
+			ComputeKeyPointsOctTree(s, allKeypoints, masks);
 		}
 
 
@@ -1490,6 +1483,7 @@ void ORBextractor::operator()(InputArray _image, InputArray _mask, vector<KeyPoi
 
 			// cull points with mask and rm those in margin
 			float scale = mvScaleFactor[level]; //getScale(level, firstLevel, scaleFactor);
+            //mvInvScaleFactor
 			keypoints.erase(std::remove_if(keypoints.begin(), keypoints.end(), [&](const cv::KeyPoint& keypoint)->bool {
 				const cv::Point2f pt = keypoint.pt * scale;//origin scale
 
@@ -1520,7 +1514,7 @@ void ORBextractor::operator()(InputArray _image, InputArray _mask, vector<KeyPoi
 			assert(keypoints.size() == keypoints_new.size() && "ORBExtractor: keypoints should share the same size as keypooints_new");
 			
 			// preprocess the resized image
-			Mat workingMat = mvImagePyramid[level].clone();
+			Mat workingMat = mvCubePyramid[level].clone();
 			GaussianBlur(workingMat, workingMat, Size(7, 7), 2, 2, BORDER_REFLECT_101);
 
 			// Compute the descriptors
@@ -1547,9 +1541,10 @@ void ORBextractor::operator()(InputArray _image, InputArray _mask, vector<KeyPoi
 	}
 
 
-void ORBextractor::ComputePyramid(cv::Mat image, cv::Mat mask, std::vector<cv::Mat> &masks)
+void ORBextractor::ComputePyramid(cv::Mat cube_mask, std::vector<cv::Mat>& cube_masks, cv::Mat cube, cv::Mat image, cv::Mat mask, std::vector<cv::Mat> &masks)
 {
     masks.resize(nlevels);
+    cube_masks.resize(nlevels);
 
     for (int level = 0; level < nlevels; ++level)
     {
@@ -1560,25 +1555,48 @@ void ORBextractor::ComputePyramid(cv::Mat image, cv::Mat mask, std::vector<cv::M
         mvImagePyramid[level] = temp(Rect(EDGE_THRESHOLD, EDGE_THRESHOLD, sz.width, sz.height));
         masks[level] = masktemp(Rect(EDGE_THRESHOLD, EDGE_THRESHOLD, sz.width, sz.height));
 
+        //mvCubePyramid
+        Size cube_sz(cvRound((float)cube.cols * scale), cvRound((float)cube.rows * scale));
+        Size cube_wholeSize(cube_sz.width + EDGE_THRESHOLD * 2, cube_sz.height + EDGE_THRESHOLD * 2);
+        Mat cube_temp(cube_wholeSize, cube.type()), cube_masktemp(cube_wholeSize, cube_mask.type());
+        mvCubePyramid[level] = cube_temp(Rect(EDGE_THRESHOLD, EDGE_THRESHOLD, cube_sz.width, cube_sz.height));
+        cube_masks[level] = cube_masktemp(Rect(EDGE_THRESHOLD, EDGE_THRESHOLD, cube_sz.width, cube_sz.height));
+
+
         // Compute the resized image
         if (level != 0)
         {
             resize(mvImagePyramid[level - 1], mvImagePyramid[level], sz, 0, 0, INTER_LINEAR);
+            resize(mvCubePyramid[level - 1], mvCubePyramid[level], cube_sz, 0, 0, INTER_LINEAR);
+
             copyMakeBorder(mvImagePyramid[level], temp, EDGE_THRESHOLD, EDGE_THRESHOLD, EDGE_THRESHOLD, EDGE_THRESHOLD,
+                           BORDER_REFLECT_101 + BORDER_ISOLATED);
+            copyMakeBorder(mvCubePyramid[level], cube_temp, EDGE_THRESHOLD, EDGE_THRESHOLD, EDGE_THRESHOLD, EDGE_THRESHOLD,
                            BORDER_REFLECT_101 + BORDER_ISOLATED);
 
             resize(masks[level - 1], masks[level], sz, 0, 0, INTER_LINEAR);
+            resize(cube_masks[level - 1], cube_masks[level], cube_sz, 0, 0, INTER_LINEAR);
+
             copyMakeBorder(masks[level], masktemp, EDGE_THRESHOLD, EDGE_THRESHOLD, EDGE_THRESHOLD, EDGE_THRESHOLD,
+                           BORDER_REFLECT_101 + BORDER_ISOLATED);
+            copyMakeBorder(cube_masks[level], cube_masktemp, EDGE_THRESHOLD, EDGE_THRESHOLD, EDGE_THRESHOLD, EDGE_THRESHOLD,
                            BORDER_REFLECT_101 + BORDER_ISOLATED);
         }
         else
         {
             copyMakeBorder(image, temp, EDGE_THRESHOLD, EDGE_THRESHOLD, EDGE_THRESHOLD, EDGE_THRESHOLD,
                            BORDER_REFLECT_101);
+            copyMakeBorder(cube, cube_temp, EDGE_THRESHOLD, EDGE_THRESHOLD, EDGE_THRESHOLD, EDGE_THRESHOLD,
+                           BORDER_REFLECT_101);
 
             copyMakeBorder(mask, masktemp, EDGE_THRESHOLD, EDGE_THRESHOLD, EDGE_THRESHOLD, EDGE_THRESHOLD,
                            BORDER_REFLECT_101 + BORDER_ISOLATED);
+            copyMakeBorder(cube_mask, cube_masktemp, EDGE_THRESHOLD, EDGE_THRESHOLD, EDGE_THRESHOLD, EDGE_THRESHOLD,
+                           BORDER_REFLECT_101 + BORDER_ISOLATED);
         }
+        // printf("%f\n", scale);
+        // cv::imshow("cube pyramid", mvCubePyramid[level]);
+        // cv::waitKey(0);
     }
 }
 

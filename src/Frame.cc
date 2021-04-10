@@ -45,7 +45,7 @@ Frame::Frame()
 
 //Copy Constructor
 Frame::Frame(const Frame &frame)
-    : mpORBvocabulary(frame.mpORBvocabulary), mpORBextractorLeft(frame.mpORBextractorLeft), mpORBextractorRight(frame.mpORBextractorRight),
+    : img(frame.img), mpORBvocabulary(frame.mpORBvocabulary), mpORBextractorLeft(frame.mpORBextractorLeft), mpORBextractorRight(frame.mpORBextractorRight),
       mTimeStamp(frame.mTimeStamp), mK(frame.mK.clone()), mDistCoef(frame.mDistCoef.clone()),
       mbf(frame.mbf), mb(frame.mb), mThDepth(frame.mThDepth), N(frame.N), mvKeys(frame.mvKeys),
       mvKeysRight(frame.mvKeysRight), mvKeysUn(frame.mvKeysUn), mvKeysSp(frame.mvKeysSp), mvuRight(frame.mvuRight),
@@ -192,10 +192,11 @@ Frame::Frame(const cv::Mat &imGray, const double &timeStamp, ORBextractor *extra
 }
 
 /* working */
-Frame::Frame(const cv::Mat &imGray, const double &timeStamp, ORBextractor *extractor, ORBVocabulary *voc, cv::Mat &K, cv::Mat &distCoef, const float &bf, const float &thDepth, const cv::Mat &mask, std::vector<cv::Mat> LUT)
+Frame::Frame(cv::Mat &cube_mask, cv::Mat &cube, const cv::Mat &imGray, const double &timeStamp, ORBextractor *extractor, ORBVocabulary *voc, cv::Mat &K, cv::Mat &distCoef, const float &bf, const float &thDepth, const cv::Mat &mask, std::vector<cv::Mat> LUT)
     : mpORBvocabulary(voc), mpORBextractorLeft(extractor), mpORBextractorRight(static_cast<ORBextractor *>(NULL)),
       mTimeStamp(timeStamp), mK(K.clone()), mDistCoef(distCoef.clone()), mbf(bf), mThDepth(thDepth)
 {
+    imGray.copyTo(img);
 
     // Frame ID
     mnId = nNextId++;
@@ -212,7 +213,7 @@ Frame::Frame(const cv::Mat &imGray, const double &timeStamp, ORBextractor *extra
 
     /** on off LUT */
     // ORB extraction 
-    ExtractORB(imGray, mask, LUT);
+    ExtractORB(cube_mask, cube, imGray, mask, LUT);
     // ExtractORB(imGray, mask);
     N = mvKeys.size();
 
@@ -297,7 +298,7 @@ void Frame::ExtractORB(const cv::Mat &im, const cv::Mat &mask)
     (*mpORBextractorLeft)(im, mask, mvKeys, mDescriptors);
 }
 
-void Frame::ExtractORB(const cv::Mat &img, const cv::Mat &mask, std::vector<cv::Mat> LUT)
+void Frame::ExtractORB(cv::Mat &cube_mask, cv::Mat &cube, const cv::Mat &img, const cv::Mat &mask, std::vector<cv::Mat> LUT)
 {
     cv::Mat LUT_x = LUT[0];
     cv::Mat LUT_y = LUT[1];
@@ -306,7 +307,7 @@ void Frame::ExtractORB(const cv::Mat &img, const cv::Mat &mask, std::vector<cv::
 
     // ORB extraction
     // (*mpORBextractorLeft)(img, mask, mvKeys, mDescriptors);
-    (*mpORBextractorLeft)(img, mask, mvKeys, mDescriptors, LUT_x, LUT_y, LUT_x_inv, LUT_y_inv);
+    (*mpORBextractorLeft)(cube_mask, cube, img, mask, mvKeys, mDescriptors, LUT_x, LUT_y, LUT_x_inv, LUT_y_inv);
 }
 
 void Frame::SetPose(cv::Mat Tcw)

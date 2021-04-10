@@ -78,7 +78,7 @@ public:
     // Returns the camera pose (empty if tracking fails).
     cv::Mat TrackMonocular(const cv::Mat &im, const double &timestamp);
     // Proccess the given monocular frame with mask 
-    cv::Mat TrackMonocular(const cv::Mat &im, const cv::Mat &mask, const double &timestamp, std::vector<cv::Mat> LUT);
+    cv::Mat TrackMonocular(cv::Mat &cube_mask, cv::Mat &cube, const cv::Mat &im, const cv::Mat &mask, const double &timestamp, std::vector<cv::Mat> LUT);
 
     // This stops local mapping thread (map building) and performs only camera tracking.
     void ActivateLocalizationMode();

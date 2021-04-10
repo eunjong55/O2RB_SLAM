@@ -62,7 +62,7 @@ public:
     cv::Mat GrabImageRGBD(const cv::Mat &imRGB,const cv::Mat &imD, const double &timestamp);
     cv::Mat GrabImageMonocular(const cv::Mat &im, const double &timestamp);
     // With mask 
-    cv::Mat GrabImageMonocular(const cv::Mat &im, const cv::Mat &mask, const double &timestamp, std::vector<cv::Mat> LUT);
+    cv::Mat GrabImageMonocular(cv::Mat &cube_mask, cv::Mat &cube, const cv::Mat &im, const cv::Mat &mask, const double &timestamp, std::vector<cv::Mat> LUT);
 
     void SetLocalMapper(LocalMapping* pLocalMapper);
     void SetLoopClosing(LoopClosing* pLoopClosing);

@@ -226,7 +226,7 @@ cv::Mat Tracking::GrabImageMonocular(const cv::Mat &im, const double &timestamp)
     return mCurrentFrame.mTcw.clone();
 }
 
-cv::Mat Tracking::GrabImageMonocular(const cv::Mat &im, const cv::Mat &mask, const double &timestamp, std::vector<cv::Mat> LUT)
+cv::Mat Tracking::GrabImageMonocular(cv::Mat &cube_mask, cv::Mat &cube, const cv::Mat &im, const cv::Mat &mask, const double &timestamp, std::vector<cv::Mat> LUT)
 {
     assert(mask.type() == CV_8UC1 && "warning: mask should be in grayscale format\n");
 
@@ -249,9 +249,9 @@ cv::Mat Tracking::GrabImageMonocular(const cv::Mat &im, const cv::Mat &mask, con
 
     float res1;
     if (mState == NOT_INITIALIZED || mState == NO_IMAGES_YET)
-        mCurrentFrame = Frame(mImGray, timestamp, mpIniORBextractor, mpORBVocabulary, mK, mDistCoef, mbf, mThDepth, mask, LUT);
+        mCurrentFrame = Frame(cube_mask, cube, mImGray, timestamp, mpIniORBextractor, mpORBVocabulary, mK, mDistCoef, mbf, mThDepth, mask, LUT);
     else
-        mCurrentFrame = Frame(mImGray, timestamp, mpORBextractorLeft, mpORBVocabulary, mK, mDistCoef, mbf, mThDepth, mask, LUT);
+        mCurrentFrame = Frame(cube_mask, cube, mImGray, timestamp, mpORBextractorLeft, mpORBVocabulary, mK, mDistCoef, mbf, mThDepth, mask, LUT);
 
     Track();
 
@@ -740,6 +740,8 @@ void Tracking::UpdateLastFrame()
 
 bool Tracking::TrackWithMotionModel()
 {
+    std::vector<int> vnMatches12 = vector<int>(mCurrentFrame.mvKeys.size(),-1);
+
     ORBmatcher matcher(0.9, false);
 
     // Update last frame pose according to its reference keyframe
@@ -752,20 +754,38 @@ bool Tracking::TrackWithMotionModel()
 
     // Project points seen in previous frame
     int th = 15;
-    int nmatches = matcher.SearchByProjection(mCurrentFrame, mLastFrame, th, mSensor == System::MONOCULAR); //3
+    int nmatches = matcher.SearchByProjection(vnMatches12, mCurrentFrame, mLastFrame, th, mSensor == System::MONOCULAR); //3
 
     // If few matches, uses a wider window search
     if (nmatches < 20)
     {
         fill(mCurrentFrame.mvpMapPoints.begin(), mCurrentFrame.mvpMapPoints.end(), static_cast<MapPoint *>(NULL));
-        nmatches = matcher.SearchByProjection(mCurrentFrame, mLastFrame, 2 * th, mSensor == System::MONOCULAR); //3
+        nmatches = matcher.SearchByProjection(vnMatches12, mCurrentFrame, mLastFrame, 2 * th, mSensor == System::MONOCULAR); //3
     }
 
     if (nmatches < 20)
     {
         return false;
     }
+    //ej_for_debug
+    cv::Mat m_result;
+    cv::hconcat(mLastFrame.img, mCurrentFrame.img, m_result);
+    cv::cvtColor(m_result, m_result, CV_GRAY2BGR);
 
+    for(int i=0; i<vnMatches12.size(); i++)
+    {
+        if(vnMatches12[i]!=-1)
+        {
+         cv::Scalar color(rand() % 256, rand() % 256, rand() % 256);
+            
+            cv::circle(m_result, mLastFrame.mvKeys[vnMatches12[i]].pt, 4, color, 2);
+            cv::circle(m_result, mCurrentFrame.mvKeys[i].pt+ cv::Point2f(mLastFrame.img.cols, 0), 4, color, 2);
+            cv::line(m_result, mCurrentFrame.mvKeys[i].pt+ cv::Point2f(mCurrentFrame.img.cols, 0), mLastFrame.mvKeys[vnMatches12[i]].pt, color, 2);
+        }
+    }
+    cv::resize(m_result, m_result, cv::Size(), 0.65, 0.65);
+    cv::imshow("matching_result", m_result);
+    cv::waitKey(0);
 
     // Optimize frame pose with all matches
     Optimizer::PoseOptimization(&mCurrentFrame);
@@ -919,6 +939,8 @@ void Tracking::CreateNewKeyFrame()
 
     mnLastKeyFrameId = mCurrentFrame.mnId;
     mpLastKeyFrame = pKF;
+
+    // mpKeyFrameDB->add(pKF);
 }
 
 void Tracking::SearchLocalPoints()
@@ -1130,8 +1152,11 @@ bool Tracking::Relocalization()
     vector<KeyFrame *> vpCandidateKFs = mpKeyFrameDB->DetectRelocalizationCandidates(&mCurrentFrame);
 
     if (vpCandidateKFs.empty())
+        printf("aaaaa : candidate key not empty!\n");
         return false;
 
+    printf("bbbbb : candidate key not empty!\n");
+    
     const int nKFs = vpCandidateKFs.size();
 
     // We perform first an ORB matching with each candidate

@@ -116,7 +116,7 @@ int main(int argc, char **argv)
 
         start1 = clock();
         // Pass the image to the SLAM system
-        SLAM.TrackMonocular(im, mask, delay, LUT);
+        SLAM.TrackMonocular(mask, im, im, mask, delay, LUT);
         end1 = clock();
         res1 = (float)(end1 - start1) / CLOCKS_PER_SEC;
 

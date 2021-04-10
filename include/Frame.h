@@ -58,7 +58,7 @@ public:
     // Constructor for Monocular cameras.
     Frame(const cv::Mat &imGray, const double &timeStamp, ORBextractor* extractor,ORBVocabulary* voc, cv::Mat &K, cv::Mat &distCoef, const float &bf, const float &thDepth);
     // With mask
-    Frame(const cv::Mat &imGray, const double &timeStamp, ORBextractor *extractor, ORBVocabulary *voc, cv::Mat &K, cv::Mat &distCoef, const float &bf, const float &thDepth, const cv::Mat &mask, std::vector<cv::Mat> LUT);
+    Frame(cv::Mat &cube_mask, cv::Mat &cube, const cv::Mat &imGray, const double &timeStamp, ORBextractor *extractor, ORBVocabulary *voc, cv::Mat &K, cv::Mat &distCoef, const float &bf, const float &thDepth, const cv::Mat &mask, std::vector<cv::Mat> LUT);
 
 
 
@@ -67,7 +67,7 @@ public:
     // With mask
     void ExtractORB(const cv::Mat &im, const cv::Mat &mask);
     // With mask LUT 
-    void ExtractORB(const cv::Mat &img, const cv::Mat &mask, std::vector<cv::Mat> LUT);
+    void ExtractORB(cv::Mat &cube_mask, cv::Mat &cube, const cv::Mat &img, const cv::Mat &mask, std::vector<cv::Mat> LUT);
 
     // Compute Bag of Words representation.
     void ComputeBoW();
@@ -109,6 +109,8 @@ public:
     cv::Mat UnprojectStereo(const int &i);
 
 public:
+    cv::Mat img;
+
     // Vocabulary used for relocalization.
     ORBVocabulary* mpORBvocabulary;
 
