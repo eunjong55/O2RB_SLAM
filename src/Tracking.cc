@@ -768,6 +768,7 @@ bool Tracking::TrackWithMotionModel()
         return false;
     }
     //ej_for_debug
+
     cv::Mat m_result;
     cv::hconcat(mLastFrame.img, mCurrentFrame.img, m_result);
     cv::cvtColor(m_result, m_result, CV_GRAY2BGR);
@@ -784,8 +785,8 @@ bool Tracking::TrackWithMotionModel()
         }
     }
     cv::resize(m_result, m_result, cv::Size(), 0.65, 0.65);
-    cv::imshow("matching_result", m_result);
-    cv::waitKey(0);
+    // cv::imshow("matching_result", m_result);
+    // cv::waitKey(0);
 
     // Optimize frame pose with all matches
     Optimizer::PoseOptimization(&mCurrentFrame);

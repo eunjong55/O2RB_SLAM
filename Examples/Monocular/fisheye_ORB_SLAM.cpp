@@ -40,7 +40,7 @@ int main(int argc, char **argv)
     // Mat mask = imread("/home/cgv/Desktop/dataset/osuk_3rd_floor_mask_mask.jpg", IMREAD_GRAYSCALE);
 
     // Create SLAM system. It initializes all system threads and gets ready to process frames.
-    ORB_SLAM2::System SLAM(path_to_vocabulary, path_to_settings, ORB_SLAM2::System::MONOCULAR, false);
+    ORB_SLAM2::System SLAM(path_to_vocabulary, path_to_settings, ORB_SLAM2::System::MONOCULAR, true);
 
     std::vector<cv::Mat> LUT;
     cv::Mat LUT_x = SLAM.mMap1;

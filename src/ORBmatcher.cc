@@ -1487,8 +1487,10 @@ int ORBmatcher::SearchByProjection(std::vector<int> &vnMatches12, Frame &Current
                 cv::circle(cur, cv::Point(xx, yy), radius, (255,0,0), 2);
 
 
+                
+
                 vector<size_t> vIndices2;
-                vIndices2 = CurrentFrame.GetFeaturesInArea(uv_isin_(0),uv_isin_(1), radius, nLastOctave-1, nLastOctave+1);
+                vIndices2 = CurrentFrame.GetFeaturesInArea(uv_isin_(0),uv_isin_(1), radius/3, nLastOctave-1, nLastOctave+1);
 
                 if(vIndices2.empty())
                     continue;

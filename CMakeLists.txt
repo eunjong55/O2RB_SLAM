@@ -81,65 +81,11 @@ ${PROJECT_SOURCE_DIR}/Thirdparty/g2o/lib/libg2o.so
 
 # Build examples
 
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/Examples/RGB-D)
-
-#add_executable(rgbd_tum
-#Examples/RGB-D/rgbd_tum.cc)
-#target_link_libraries(rgbd_tum ${PROJECT_NAME})
-
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/Examples/Stereo)
-
-# add_executable(stereo_kitti
-# Examples/Stereo/stereo_kitti.cc)
-# target_link_libraries(stereo_kitti ${PROJECT_NAME})
-
-# add_executable(stereo_euroc
-# Examples/Stereo/stereo_euroc.cc)
-# target_link_libraries(stereo_euroc ${PROJECT_NAME})
-
-
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR})
 
-#add_executable(mono_tum
-#Examples/Monocular/mono_tum.cc)
-#target_link_libraries(mono_tum ${PROJECT_NAME})
-
-#add_executable(mono_kitti
-#Examples/Monocular/mono_kitti.cc)
-#target_link_libraries(mono_kitti ${PROJECT_NAME})
-
-#add_executable(mono_euroc
-#Examples/Monocular/mono_euroc.cc)
-#target_link_libraries(mono_euroc ${PROJECT_NAME})
-
-#add_executable(webcam
-#Examples/Monocular/webcam_test.cpp)
-#target_link_libraries(webcam ${PROJECT_NAME})
-
-#add_executable(video
-#Examples/Monocular/video_test.cpp)
-#target_link_libraries(video ${PROJECT_NAME})
 
 add_executable(fisheye_ORB_SLAM
 Examples/Monocular/fisheye_ORB_SLAM.cpp)
 target_link_libraries(fisheye_ORB_SLAM ${PROJECT_NAME})
 
-#add_executable(fisheye_TUM_ORB_SLAM
-#Examples/Monocular/fisheye_TUM_ORB_SLAM.cpp)
-#target_link_libraries(fisheye_TUM_ORB_SLAM ${PROJECT_NAME})
 
-add_executable(fisheye_cubedata_ORB_SLAM
-Examples/Monocular/fisheye_cubedata_ORB_SLAM.cpp)
-target_link_libraries(fisheye_cubedata_ORB_SLAM ${PROJECT_NAME})
-
-add_executable(fisheye_lafida_ORB_SLAM
-Examples/Monocular/fisheye_lafida_ORB_SLAM.cpp)
-target_link_libraries(fisheye_lafida_ORB_SLAM ${PROJECT_NAME})
-
-#add_executable(fisheye_make_SLAM
-#Examples/Monocular/fisheye_make.cpp)
-#target_link_libraries(fisheye_make_SLAM ${PROJECT_NAME})
-
-# add_executable(undistorted_fisheye
-# Examples/Monocular/undistorted_fisheye.cpp)
-# target_link_libraries(undistorted_fisheye ${PROJECT_NAME})

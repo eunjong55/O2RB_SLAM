@@ -44,7 +44,7 @@ Camera.fps: 25.0
 Camera.RGB: 1
 
 # Modify nFeatures depending on performance.
-ORBextractor.nFeatures: 4000
+ORBextractor.nFeatures: 2000
 ORBextractor.scaleFactor: 1.2
 ORBextractor.nLevels: 8
 #if there is a mask

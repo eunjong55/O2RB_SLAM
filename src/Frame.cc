@@ -214,6 +214,9 @@ Frame::Frame(cv::Mat &cube_mask, cv::Mat &cube, const cv::Mat &imGray, const dou
     /** on off LUT */
     // ORB extraction 
     ExtractORB(cube_mask, cube, imGray, mask, LUT);
+
+    
+
     // ExtractORB(imGray, mask);
     N = mvKeys.size();
 
