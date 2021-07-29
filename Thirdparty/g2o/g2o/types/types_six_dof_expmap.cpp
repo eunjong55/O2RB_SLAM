@@ -131,6 +131,7 @@ void EdgeSphereSE3ProjectXYZ::linearizeOplus() {
   SE3Quat T(vj->estimate());
   VertexSBAPointXYZ* vi = static_cast<VertexSBAPointXYZ*>(_vertices[0]); //3D_Pt vertex estimation
   Vector3d xyz = vi->estimate();//from 3D_pt vertex X
+
   Vector3d xyz_trans = T.map(xyz);//from RT vertex, World2Cam_origin  X'
   
   const Matrix3d R =  T.rotation().toRotationMatrix();//R
@@ -139,50 +140,35 @@ void EdgeSphereSE3ProjectXYZ::linearizeOplus() {
   double x_T = xyz_trans[0];
   double y_T = xyz_trans[1];
   double z_T = xyz_trans[2];
+
   double D = sqrt(x_T*x_T + y_T*y_T + z_T*z_T);//D
+
   Matrix3d eye_mat =  Matrix3d::Identity(3, 3);//I
 
+  double size = sqrt( pow(x_T,2) + pow(y_T,2) + pow(z_T, 2) );
 
-  double tmp0 = -1.0 * (rad / D);
-  Eigen::Matrix3d tmp1 = 1/(D*D) * xyz_trans * xyz_trans.transpose();
+  Matrix3d lo = Matrix3d::Identity(3, 3);
+  lo(0,0) = rad * (size - pow(x_T, 2)/size) / pow(size, 2);
+  lo(0,1) = -1* rad * x_T * y_T / pow(size, 3);
+  lo(0,2) = -1* rad * x_T * z_T / pow(size, 3);
 
+  lo(1,0) = -1* rad * y_T * x_T / pow(size, 3);
+  lo(1,1) = rad * (size - pow(y_T, 2)/size) / pow(size, 2);
+  lo(1,2) = -1* rad * y_T * z_T / pow(size, 3);
 
-   MatrixXd Xj_X = tmp0 * (R - tmp1 * R);
-  _jacobianOplusXi(0,0) = Xj_X(0,0);//x_obs_X(x)
-  _jacobianOplusXi(0,1) = Xj_X(0,1);
-  _jacobianOplusXi(0,2) = Xj_X(0,2);
+  lo(2,0) = -1* rad * z_T * x_T / pow(size, 3);
+  lo(2,1) = -1* rad * z_T * y_T / pow(size, 3);
+  lo(2,2) = rad * (size - pow(z_T, 2)/size) / pow(size, 2);
 
-  _jacobianOplusXi(1,0) = Xj_X(1,0);//y_obs_X(y)
-  _jacobianOplusXi(1,1) = Xj_X(1,1);
-  _jacobianOplusXi(1,2) = Xj_X(1,2);
+  _jacobianOplusXi = -1 * lo * R;
 
-  _jacobianOplusXi(2,0) = Xj_X(2,0);//z_obs_X(z)
-  _jacobianOplusXi(2,1) = Xj_X(2,1);
-  _jacobianOplusXi(2,2) = Xj_X(2,2);
+  MatrixXd Xj_R = skew(-1*xyz_trans);
+  MatrixXd Xj_T = eye_mat;
+  MatrixXd RT(Xj_R.rows(), Xj_R.cols()+Xj_T.cols());
+  RT << Xj_R, Xj_T;
+  
 
-
-  MatrixXd Xj_R = tmp0 * ((skew(-1*xyz)) - tmp1 * (skew(-1*xyz)));
-  MatrixXd Xj_T = tmp0 * (eye_mat - tmp1 * eye_mat);
-  _jacobianOplusXj(0,0) = Xj_R(0,0);//x_obs_RT
-  _jacobianOplusXj(0,1) = Xj_R(0,1);
-  _jacobianOplusXj(0,2) = Xj_R(0,2);
-  _jacobianOplusXj(0,3) = Xj_T(0,0);
-  _jacobianOplusXj(0,4) = Xj_T(0,1);
-  _jacobianOplusXj(0,5) = Xj_T(0,2);
-
-  _jacobianOplusXj(1,0) = Xj_R(1,0);//y_obs_RT
-  _jacobianOplusXj(1,1) = Xj_R(1,1);
-  _jacobianOplusXj(1,2) = Xj_R(1,2);
-  _jacobianOplusXj(1,3) = Xj_T(1,0);
-  _jacobianOplusXj(1,4) = Xj_T(1,1);
-  _jacobianOplusXj(1,5) = Xj_T(1,2);
-
-  _jacobianOplusXj(2,0) = Xj_R(2,0);//z_obs_RT
-  _jacobianOplusXj(2,1) = Xj_R(2,1);
-  _jacobianOplusXj(2,2) = Xj_R(2,2);
-  _jacobianOplusXj(2,3) = Xj_T(2,0);
-  _jacobianOplusXj(2,4) = Xj_T(2,1);
-  _jacobianOplusXj(2,5) = Xj_T(2,2);
+  _jacobianOplusXj = -1 * lo * RT;
 
 }
 
@@ -221,42 +207,74 @@ bool EdgeSphereSE3ProjectXYZOnlyPose::write(std::ostream& os) const {
 // sphere model:: x_sphere(3d), X(3d), Twc(RT)
 // sphere model: EdgeSphereSE3ProjectXYZOnlyPose::
 void EdgeSphereSE3ProjectXYZOnlyPose::linearizeOplus() {
-  VertexSE3Expmap * vi = static_cast<VertexSE3Expmap *>(_vertices[0]);//RT vertex estimation
+  // VertexSE3Expmap * vi = static_cast<VertexSE3Expmap *>(_vertices[0]);//RT vertex estimation
   
-  Vector3d xyz_trans = vi->estimate().map(Xw);//X', X
-  // const Matrix3d R = vi->estimate().rotation().toRotationMatrix();//R
+  // Vector3d xyz_trans = vi->estimate().map(Xw);//X', X
+  // // const Matrix3d R = vi->estimate().rotation().toRotationMatrix();//R
 
-  double x_T = xyz_trans[0];//X'
-  double y_T = xyz_trans[1];
-  double z_T = xyz_trans[2];
-  double D = sqrt(x_T*x_T + y_T*y_T + z_T*z_T);//D
-  Matrix3d eye_mat =  Matrix3d::Identity(3, 3);//I
+  // double x_T = xyz_trans[0];//X'
+  // double y_T = xyz_trans[1];
+  // double z_T = xyz_trans[2];
+  // double D = sqrt(x_T*x_T + y_T*y_T + z_T*z_T);//D
+  // Matrix3d eye_mat =  Matrix3d::Identity(3, 3);//I
 
-  double tmp0 = -1.0 * (rad  / D );
-  Eigen::Matrix3d tmp1 = 1/(D*D) * xyz_trans * xyz_trans.transpose();
+  // double tmp0 = -1.0 * (rad  / D );
+  // Eigen::Matrix3d tmp1 = 1/(D*D) * xyz_trans * xyz_trans.transpose();
 
-  MatrixXd Xj_R = tmp0 * ((skew(-1*Xw)) - tmp1 * (skew(-1*Xw)));
-  MatrixXd Xj_T = tmp0 * (eye_mat - tmp1 * eye_mat);
-  _jacobianOplusXi(0,0) = Xj_R(0,0);//x_obs_RT
-  _jacobianOplusXi(0,1) = Xj_R(0,1);
-  _jacobianOplusXi(0,2) = Xj_R(0,2);
-  _jacobianOplusXi(0,3) = Xj_T(0,0);
-  _jacobianOplusXi(0,4) = Xj_T(0,1);
-  _jacobianOplusXi(0,5) = Xj_T(0,2);
+  // MatrixXd Xj_R = tmp0 * ((skew(-1*Xw)) - tmp1 * (skew(-1*Xw)));
+  // MatrixXd Xj_T = tmp0 * (eye_mat - tmp1 * eye_mat);
+  // _jacobianOplusXi(0,0) = Xj_R(0,0);//x_obs_RT
+  // _jacobianOplusXi(0,1) = Xj_R(0,1);
+  // _jacobianOplusXi(0,2) = Xj_R(0,2);
+  // _jacobianOplusXi(0,3) = Xj_T(0,0);
+  // _jacobianOplusXi(0,4) = Xj_T(0,1);
+  // _jacobianOplusXi(0,5) = Xj_T(0,2);
 
-  _jacobianOplusXi(1,0) = Xj_R(1,0);//y_obs_RT
-  _jacobianOplusXi(1,1) = Xj_R(1,1);
-  _jacobianOplusXi(1,2) = Xj_R(1,2);
-  _jacobianOplusXi(1,3) = Xj_T(1,0);
-  _jacobianOplusXi(1,4) = Xj_T(1,1);
-  _jacobianOplusXi(1,5) = Xj_T(1,2);
+  // _jacobianOplusXi(1,0) = Xj_R(1,0);//y_obs_RT
+  // _jacobianOplusXi(1,1) = Xj_R(1,1);
+  // _jacobianOplusXi(1,2) = Xj_R(1,2);
+  // _jacobianOplusXi(1,3) = Xj_T(1,0);
+  // _jacobianOplusXi(1,4) = Xj_T(1,1);
+  // _jacobianOplusXi(1,5) = Xj_T(1,2);
 
-  _jacobianOplusXi(2,0) = Xj_R(2,0);//z_obs_RT
-  _jacobianOplusXi(2,1) = Xj_R(2,1);
-  _jacobianOplusXi(2,2) = Xj_R(2,2);
-  _jacobianOplusXi(2,3) = Xj_T(2,0);
-  _jacobianOplusXi(2,4) = Xj_T(2,1);
-  _jacobianOplusXi(2,5) = Xj_T(2,2);
+  // _jacobianOplusXi(2,0) = Xj_R(2,0);//z_obs_RT
+  // _jacobianOplusXi(2,1) = Xj_R(2,1);
+  // _jacobianOplusXi(2,2) = Xj_R(2,2);
+  // _jacobianOplusXi(2,3) = Xj_T(2,0);
+  // _jacobianOplusXi(2,4) = Xj_T(2,1);
+  // _jacobianOplusXi(2,5) = Xj_T(2,2);
+
+    VertexSE3Expmap * vi = static_cast<VertexSE3Expmap *>(_vertices[0]);//RT vertex estimation
+    
+    Vector3d xyz_trans = vi->estimate().map(Xw);
+
+    double x_T = xyz_trans[0];
+    double y_T = xyz_trans[1];
+    double z_T = xyz_trans[2];
+
+    double size = sqrt( pow(x_T,2) + pow(y_T,2) + pow(z_T, 2) );
+
+    Matrix3d eye_mat =  Matrix3d::Identity(3, 3);//I
+    Matrix3d lo = Matrix3d::Identity(3, 3);
+    lo(0,0) = rad * (size - pow(x_T, 2)/size) / pow(size, 2);
+    lo(0,1) = -1* rad * x_T * y_T / pow(size, 3);
+    lo(0,2) = -1* rad * x_T * z_T / pow(size, 3);
+
+    lo(1,0) = -1* rad * y_T * x_T / pow(size, 3);
+    lo(1,1) = rad * (size - pow(y_T, 2)/size) / pow(size, 2);
+    lo(1,2) = -1* rad * y_T * z_T / pow(size, 3);
+
+    lo(2,0) = -1* rad * z_T * x_T / pow(size, 3);
+    lo(2,1) = -1* rad * z_T * y_T / pow(size, 3);
+    lo(2,2) = rad * (size - pow(z_T, 2)/size) / pow(size, 2);
+
+    MatrixXd Xj_R = skew(-1*xyz_trans);
+    MatrixXd Xj_T = eye_mat;
+
+    MatrixXd RT(Xj_R.rows(), Xj_R.cols()+Xj_T.cols());
+
+    RT << Xj_R, Xj_T;
+    _jacobianOplusXi = -1 * lo * RT;
 
 }
 

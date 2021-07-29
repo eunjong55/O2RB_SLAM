@@ -8,6 +8,8 @@
 
 #include "System.h"
 
+#include <sys/time.h>
+
 using namespace std;
 using namespace cv;
 /* track on off */
@@ -19,19 +21,16 @@ unsigned int frame_counter;
 
 int main(int argc, char **argv)
 {
-    string path_to_vocabulary = "/home/oooony/바탕화면/jiwon/fisheye_ORB_SLAM/Vocabulary/ORBvoc.txt";
-    string path_to_settings = "/home/oooony/바탕화면/jiwon/fisheye_ORB_SLAM/Examples/Monocular/vadas_cam_params.yaml";
+    string path_to_vocabulary = "/home/cgv/Desktop/github/O2RB_SLAM/Vocabulary/ORBvoc.txt";
+    string path_to_settings = "/home/cgv/Desktop/github/O2RB_SLAM/Examples/Monocular/vadas_cam_params.yaml";
 
-    VideoCapture cap("/home/oooony/바탕화면/dataset/Vadas/AVB_20190702151249_00002_ch01.h264");
-    // VideoCapture cap("/home/oooony/바탕화면/dataset/Vadas/AVB_20180829141553_00002_ch01.h264");
-    // VideoCapture cap("/home/oooony/Dataset/vadas_fisheye_parking_dataset/P-001/ch01.mp4");
-
+    VideoCapture cap("/home/cgv/Desktop/dataset/vadas/2019.mp4");
     double delay = 1000.0 / cap.get(CV_CAP_PROP_FPS);
 
-    int start = 35;
+    int start = 0;
     cap.set(CV_CAP_PROP_POS_MSEC, (double)start * 1000);
 
-    Mat mask = imread("/home/oooony/바탕화면/jiwon/fisheye_ORB_SLAM/Examples/Monocular/mask_fisheye.png", IMREAD_GRAYSCALE);
+    Mat mask = imread("/home/cgv/Desktop/github/O2RB_SLAM/Examples/Monocular/mask_fisheye.png", IMREAD_GRAYSCALE);
 
     // Create SLAM system. It initializes all system threads and gets ready to process frames.
     ORB_SLAM2::System SLAM(path_to_vocabulary, path_to_settings, ORB_SLAM2::System::MONOCULAR, true);
@@ -48,12 +47,14 @@ int main(int argc, char **argv)
 
     // Main loop
     cv::Mat im;
-
+    for(int i=0; i<400; i++) cap >> im;
     while (true)
     {
+        struct timeval start = {};
+        gettimeofday(&start, NULL);
+
         // Read image from file
         cap >> im; 
-        cap.grab();
 
         if (im.empty())
         {
@@ -63,6 +64,14 @@ int main(int argc, char **argv)
         }
         // Pass the image to the SLAM system
         SLAM.TrackMonocular(im, mask, delay, LUT);
+
+        struct timeval end = {};
+        gettimeofday(&end, NULL);
+
+        double time = (end.tv_sec - start.tv_sec)*1000.0  + ( end.tv_usec -start.tv_usec) /1000.0;
+        FILE * fp_ = fopen("/home/cgv/Desktop/github/O2RB_time1.csv", "a");
+        fprintf(fp_, "%lf, %lf\n", cap.get(CV_CAP_PROP_POS_FRAMES), time);
+        fclose(fp_);
     }
 
     // Stop all threads
