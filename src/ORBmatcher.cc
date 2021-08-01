@@ -1457,8 +1457,15 @@ int ORBmatcher::SearchByProjection(Frame &CurrentFrame, const Frame &LastFrame, 
 
                 int nLastOctave = LastFrame.mvKeys[i].octave;
 
+                // add search range weight 
+                int x_diff = uv_isin_(0)-CurrentFrame.mnMaxX/2;
+                int y_diff = uv_isin_(1)-CurrentFrame.mnMaxY/2;
+                float feature_dist = sqrt(pow(x_diff,2)+pow(y_diff, 2));
+                float max_dist = sqrt(pow(CurrentFrame.mnMaxX/2, 2)+pow(CurrentFrame.mnMaxY/2, 2));
+                float weight = 1 + feature_dist/max_dist * 2.0;
+
                 // Search in a window. Size depends on scale
-                float radius = th*CurrentFrame.mvScaleFactors[nLastOctave];
+                float radius = th*CurrentFrame.mvScaleFactors[nLastOctave]/1.5*weight;
 
                 vector<size_t> vIndices2;
                     vIndices2 = CurrentFrame.GetFeaturesInArea(uv_isin_(0),uv_isin_(1), radius, nLastOctave-1, nLastOctave+1);

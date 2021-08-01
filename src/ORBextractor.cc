@@ -166,7 +166,8 @@ static void computeOrbDescriptor(const KeyPoint& kpt, const Point2f& kpt_C, cons
 		CamModelGeneral::GetCamera()->FisheyeToCubemap(orientF.x, orientF.y, orientX, orientY);
 
 		cv::Point2f orientP((orientX - kpt_C.x), (orientY - kpt_C.y));
-		orientP /= norm(orientP);
+        if(norm(orientP) == 0) orientP /= 0.0000001;
+        else orientP /= norm(orientP);
 		float a = orientP.x, b = orientP.y;//a = cosTH / b = sinTH
 
 
@@ -1019,18 +1020,18 @@ void ORBextractor::ComputeKeyPointsOctTree(vector<vector<KeyPoint>> &allKeypoint
                     maxX = maxBorderX;
 
                 vector<cv::KeyPoint> vKeysCell;
-                // FAST(mvImagePyramid[level].rowRange(iniY,maxY).colRange(iniX,maxX),
-                //      vKeysCell,iniThFAST,true);
-                Ptr<FastFeatureDetector> detector = FastFeatureDetector::create(iniThFAST);
-                detector->detect(mvImagePyramid[level].rowRange(iniY, maxY).colRange(iniX, maxX),
-                                 vKeysCell, masks[level].rowRange(iniY, maxY).colRange(iniX, maxX));
+                FAST(mvImagePyramid[level].rowRange(iniY,maxY).colRange(iniX,maxX),
+                     vKeysCell,iniThFAST,true);
+                // Ptr<FastFeatureDetector> detector = FastFeatureDetector::create(iniThFAST);
+                // detector->detect(mvImagePyramid[level].rowRange(iniY, maxY).colRange(iniX, maxX),
+                //                  vKeysCell, masks[level].rowRange(iniY, maxY).colRange(iniX, maxX));
 
                 if (vKeysCell.empty())
                 {
-                    // FAST(mvImagePyramid[level].rowRange(iniY,maxY).colRange(iniX,maxX),
-                    //      vKeysCell,minThFAST,true);
-                    detector->detect(mvImagePyramid[level].rowRange(iniY, maxY).colRange(iniX, maxX),
-                                     vKeysCell, masks[level].rowRange(iniY, maxY).colRange(iniX, maxX));
+                    FAST(mvImagePyramid[level].rowRange(iniY,maxY).colRange(iniX,maxX),
+                         vKeysCell,minThFAST,true);
+                    // detector->detect(mvImagePyramid[level].rowRange(iniY, maxY).colRange(iniX, maxX),
+                    //                  vKeysCell, masks[level].rowRange(iniY, maxY).colRange(iniX, maxX));
                 }
 
                 if (!vKeysCell.empty())
@@ -1499,6 +1500,7 @@ void ORBextractor::operator()(InputArray _image, InputArray _mask, vector<KeyPoi
 				pt_C.x = LUT_x_inv.at<float>(pt.y, pt.x);
 				pt_C.y = LUT_y_inv.at<float>(pt.y, pt.x);
 
+                if(mask.at<uchar>((int)pt.y, (int)pt.x) == 0) return true;
 
 
 				/* C_mask */

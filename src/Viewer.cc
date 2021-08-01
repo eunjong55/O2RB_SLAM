@@ -22,7 +22,7 @@
 #include <pangolin/pangolin.h>
 
 #include <mutex>
-
+#include <unistd.h>
 namespace ORB_SLAM2
 {
 
@@ -134,14 +134,13 @@ void Viewer::Run()
 
         pangolin::FinishFrame();
 
-        // cv::Mat im = mpFrameDrawer->DrawFrame();
-        // changed
-        // cv::Mat im_resize; int rows = im.rows; int cols = im.cols;
-        // // original : cv::Mat im_resize; int rows = im.rows / 2; int cols = im.cols / 2;
-        // cv::resize(im, im_resize, cv::Size(cols, rows), 0, 0, CV_INTER_LINEAR );
-        // cv::imshow("ORB-SLAM2: Current Frame",im_resize);
-        // //cv::waitKey(mT);
-        // cv::waitKey(1);
+        cv::Mat im = mpFrameDrawer->DrawFrame();
+        cv::Mat im_resize; int rows = im.rows; int cols = im.cols;
+        // cv::Mat im_resize; int rows = im.rows / 2; int cols = im.cols / 2;
+        cv::resize(im, im_resize, cv::Size(cols, rows), 0, 0, CV_INTER_LINEAR );
+        cv::imshow("ORB-SLAM2: Current Frame",im_resize);
+        //cv::waitKey(mT);
+        cv::waitKey(1);
 
         if(menuReset)
         {

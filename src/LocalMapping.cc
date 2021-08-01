@@ -24,7 +24,7 @@
 #include "Optimizer.h"
 
 #include<mutex>
-
+#include <unistd.h>
 
 // #define loc_test
 
