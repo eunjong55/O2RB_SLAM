@@ -26,20 +26,50 @@ void LoadImages(const string &strFile, vector<string> &vstrImageFilenames, vecto
 int main(int argc, char **argv)
 {
     frame_counter = 0;
-    string path_to_vocabulary = "/home/oooony/바탕화면/jiwon/fisheye_ORB_SLAM/Vocabulary/ORBvoc.txt";
-    string path_to_settings = "/home/oooony/바탕화면/dataset/Config/lafida_cam0_params.yaml";
-
-    // std::string fisheyeImgPath = "/home/oooony/바탕화면/dataset/outdoor_rotation/imgs/cam0/";
-    // std::ifstream fin("/home/oooony/바탕화면/dataset/outdoor_rotation/images_and_timestamps.txt");
+    string path_to_vocabulary = "../../Vocabulary/ORBvoc.txt";
+    string path_to_settings = "../../Config/lafida_cam0_params.yaml";
 
     ///indoor_static
-    ///indoor_dynamic
-    ///outdoor_static
-    std::string fisheyeImgPath = "/home/oooony/바탕화면/dataset/outdoor_static/imgs/cam0/";      ///
-    std::ifstream fin("/home/oooony/바탕화면/dataset/outdoor_static/images_and_timestamps.txt"); ///
-    std::string perfSavingPath("/home/oooony/바탕화면/exp/outdoor_static/data_fish.txt");        ///
+    // std::string fisheyeImgPath = "/home/misoyuri/Desktop/Data/Sequence/indoor_static/imgs/cam0/";      ///
+    // std::ifstream fin("/home/misoyuri/Desktop/Data/Sequence/indoor_dynamic/images_and_timestamps.txt"); ///
+    // std::string perfSavingPath("/home/misoyuri/Desktop/Data/Log/indoor static/o2rb_perf.txt");        ///
+    // std::string filepath_time = "/home/misoyuri/Desktop/Data/Log/indoor static/LFOV_time.txt";
+    // std::string trajSavingPath("/home/misoyuri/Desktop/Data/Log/indoor static/o2rb_KeyFrameTrajectory.txt");
 
-    //  /home/oooony/바탕화면/dataset/sequence_11
+    ///indoor_dynamic
+    // std::string fisheyeImgPath = "/home/misoyuri/Desktop/Data/Sequence/indoor_dynamic/imgs/cam0/";      ///
+    // std::ifstream fin("/home/misoyuri/Desktop/Data/Sequence/indoor_dynamic/images_and_timestamps.txt"); ///
+    // std::string perfSavingPath("/home/misoyuri/Desktop/Data/Log/indoor_dynamic/o2rb_perf.txt");        ///
+    // std::string filepath_time = "/home/misoyuri/Desktop/Data/Log/indoor_dynamic/LFOV_time.txt";
+    // std::string trajSavingPath("/home/misoyuri/Desktop/Data/Log/indoor_dynamic/o2rb_KeyFrameTrajectory.txt");
+
+    ///outdoor_static 
+    // std::string fisheyeImgPath = "/home/misoyuri/Desktop/Data/Sequence/outdoor_static/imgs/cam0/";      ///
+    // std::ifstream fin("/home/misoyuri/Desktop/Data/Sequence/outdoor_static/images_and_timestamps.txt"); ///
+    // std::string perfSavingPath("/home/misoyuri/Desktop/Data/Log/outdoor_static/o2rb_perf.txt");        ///
+    // std::string filepath_time = "/home/misoyuri/Desktop/Data/Log/outdoor_static/LFOV_time.txt";
+    // std::string trajSavingPath("/home/misoyuri/Desktop/Data/Log/outdoor_static/o2rb_KeyFrameTrajectory.txt");
+
+    ///outdoor_static2
+    std::string fisheyeImgPath = "/home/misoyuri/Desktop/Data/Sequence/outdoor_static2/imgs/cam0/";      ///
+    std::ifstream fin("/home/misoyuri/Desktop/Data/Sequence/outdoor_static2/images_and_timestamps.txt"); ///
+    std::string perfSavingPath("/home/misoyuri/Desktop/Data/Log/outdoor_static2/o2rb_perf.txt");        ///
+    std::string filepath_time = "/home/misoyuri/Desktop/Data/Log/outdoor_static2/LFOV_time.txt";
+    std::string trajSavingPath("/home/misoyuri/Desktop/Data/Log/outdoor_static2/o2rb_KeyFrameTrajectory.txt");
+
+    ///outdoor_rotation
+    // std::string fisheyeImgPath = "/home/misoyuri/Desktop/Data/Sequence/outdoor_rotation/imgs/cam0/";      ///
+    // std::ifstream fin("/home/misoyuri/Desktop/Data/Sequence/outdoor_rotation/images_and_timestamps.txt"); ///
+    // std::string perfSavingPath("/home/misoyuri/Desktop/Data/Log/outdoor_rotation/o2rb_perf.txt");        ///
+    // std::string filepath_time = "/home/misoyuri/Desktop/Data/Log/outdoor_rotation/LFOV_time.txt";
+    // std::string trajSavingPath("/home/misoyuri/Desktop/Data/Log/outdoor_rotation/o2rb_KeyFrameTrajectory.txt");
+
+    ///outdoor_large_loop
+    // std::string fisheyeImgPath = "/home/misoyuri/Desktop/Data/Sequence/outdoor_large_loop/imgs/cam0/";      ///
+    // std::ifstream fin("/home/misoyuri/Desktop/Data/Sequence/outdoor_large_loop/images_and_timestamps.txt"); ///
+    // std::string perfSavingPath("/home/misoyuri/Desktop/Data/Log/outdoor_large_loop/o2rb_perf.txt");        ///
+    // std::string filepath_time = "/home/misoyuri/Desktop/Data/Log/outdoor_large_loop/LFOV_time.txt";
+    // std::string trajSavingPath("/home/misoyuri/Desktop/Data/Log/outdoor_large_loop/o2rb_KeyFrameTrajectory.txt");
 
     // Retrieve paths to images
     std::vector<std::string> fisheyeImgNames;
@@ -59,7 +89,7 @@ int main(int argc, char **argv)
         fisheyeImgNames.push_back(name);
     }
 
-    Mat mask = imread("/home/oooony/바탕화면/dataset/mask/lafida_mask.png", IMREAD_GRAYSCALE);
+    Mat mask = imread("/home/misoyuri/Desktop/Data/mask/mask_fish_lafida.png", IMREAD_GRAYSCALE);
     const int imageCnt = fisheyeImgNames.size();
     std::cout << "find " << imageCnt << " images" << std::endl;
 
@@ -67,7 +97,6 @@ int main(int argc, char **argv)
     vector<float> vTimesTrack;
     vTimesTrack.resize(imageCnt);
 
-    string filepath_time = "/home/oooony/바탕화면/LFOV_time.txt";
     ofstream writeFile(filepath_time.data());
 
     // Create SLAM system. It initializes all system threads and gets ready to process frames.
@@ -91,7 +120,7 @@ int main(int argc, char **argv)
     unsigned int avg_hd = 0;
     unsigned int avg_DN = 0;
 
-    int ni = 500;
+    int ni = 0;
     while (true)
     {
         avg_cnt++;
@@ -108,6 +137,7 @@ int main(int argc, char **argv)
                  << "Failed to read camera" << endl;
             break;
         }
+
         if (ni == fisheyeImgNames.size())
         {
             cout << "frame end" << endl;
@@ -174,7 +204,6 @@ int main(int argc, char **argv)
     f.close();
 
     // Save camera trajectory
-    std::string trajSavingPath("/home/oooony/바탕화면/exp/traj/fish/lafida_KeyFrameTrajectory.txt");
     if (trajSavingPath.empty())
         trajSavingPath = std::string("KeyFrameTrajectory.txt");
     SLAM.SaveKeyFrameTrajectoryTUM(trajSavingPath);
