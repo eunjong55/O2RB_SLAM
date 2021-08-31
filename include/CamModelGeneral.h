@@ -53,7 +53,7 @@ class CamModelGeneral
 {
 
 public:
-    double radius = 500.0;
+    double radius = 314.0;
 
     enum eFace {
         UNKNOWN_FACE = -1,
