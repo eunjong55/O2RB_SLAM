@@ -365,6 +365,13 @@ int Optimizer:: PoseOptimization(Frame *pFrame)
 
 void Optimizer::LocalBundleAdjustment(KeyFrame *pKF, bool *pbStopFlag, Map *pMap)
 {
+
+    // Edit 2021.11.03. SeokUn ( Time Check )
+
+    // std::chrono::steady_clock::time_point t1 = std::chrono::steady_clock::now();
+  
+    /////
+
     // Local KeyFrames: First Breath Search from Current Keyframe
     list<KeyFrame *> lLocalKeyFrames;
 
@@ -626,6 +633,17 @@ void Optimizer::LocalBundleAdjustment(KeyFrame *pKF, bool *pbStopFlag, Map *pMap
         pMP->SetWorldPos(Converter::toCvMat(vPoint->estimate()));
         pMP->UpdateNormalAndDepth();
     }
+
+    ////////
+
+    // std::chrono::steady_clock::time_point t2 = std::chrono::steady_clock::now();
+    // double ttrack = std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1).count();
+
+    // FILE * fp_ = fopen("/home/misoyuri/Desktop/Time_Check/O2RB_Local_BA.csv", "a");
+    // fprintf(fp_, "%lu, %lf\n", pKF->mnId, ttrack);
+    // fclose(fp_);
+
+    ///////
 }
 
 void Optimizer::OptimizeEssentialGraph(Map *pMap, KeyFrame *pLoopKF, KeyFrame *pCurKF,

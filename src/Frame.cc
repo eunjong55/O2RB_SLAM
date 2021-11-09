@@ -197,6 +197,7 @@ Frame::Frame(const cv::Mat &imGray, const double &timeStamp, ORBextractor *extra
       mTimeStamp(timeStamp), mK(K.clone()), mDistCoef(distCoef.clone()), mbf(bf), mThDepth(thDepth)
 {
 
+
     // Frame ID
     mnId = nNextId++;
 
@@ -210,10 +211,29 @@ Frame::Frame(const cv::Mat &imGray, const double &timeStamp, ORBextractor *extra
     mvInvLevelSigma2 = mpORBextractorLeft->GetInverseScaleSigmaSquares();
 
 
+    // Edit 2021.11.03. SeokUn ( Time Check )
+
+    // std::chrono::steady_clock::time_point t1 = std::chrono::steady_clock::now();
+
+
     /** on off LUT */
     // ORB extraction 
     ExtractORB(imGray, mask, LUT);
     // ExtractORB(imGray, mask);
+
+    // std::chrono::steady_clock::time_point t2 = std::chrono::steady_clock::now();
+    // double ttrack = std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1).count();
+
+    // FILE * fp_ = fopen("/home/misoyuri/Desktop/Time_Check/O2RB_feature_extraction.csv", "a");
+    // fprintf(fp_, "%lu, %lf\n", mnId, ttrack);
+    // fclose(fp_);
+
+    ///////
+
+
+
+
+
     N = mvKeys.size();
 
     if (mvKeys.empty())

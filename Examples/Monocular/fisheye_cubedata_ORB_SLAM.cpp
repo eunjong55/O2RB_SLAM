@@ -12,6 +12,9 @@
 using namespace std;
 using namespace cv;
 unsigned int frame_counter;
+unsigned int frame_lost_counter;
+unsigned int frame_track_started;
+
 extern float res_time;
 unsigned int HD;
 unsigned int goodmatch;

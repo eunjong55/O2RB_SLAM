@@ -25,7 +25,7 @@
 #include <thread>
 #include <pangolin/pangolin.h>
 #include <iomanip>
-
+#include <unistd.h>
 namespace ORB_SLAM2
 {
 
@@ -398,7 +398,7 @@ void System::Shutdown()
     }
 
     if(mpViewer)
-        pangolin::BindToContext("ORB-SLAM2: Map Viewer");
+        pangolin::BindToContext("O2RB-SLAM: Map Viewer");
 }
 
 void System::SaveTrajectoryTUM(const string &filename)

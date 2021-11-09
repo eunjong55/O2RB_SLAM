@@ -35,9 +35,12 @@
 #include <iostream>
 
 #include <mutex>
-
+#include <unistd.h>
 #define track_testsss
 extern unsigned int frame_counter;
+extern unsigned int frame_lost_counter;
+extern unsigned int frame_track_started;
+bool tracked_started_flag = true;
 
 using namespace std;
 
@@ -253,7 +256,18 @@ cv::Mat Tracking::GrabImageMonocular(const cv::Mat &im, const cv::Mat &mask, con
     else
         mCurrentFrame = Frame(mImGray, timestamp, mpORBextractorLeft, mpORBVocabulary, mK, mDistCoef, mbf, mThDepth, mask, LUT);
 
+    // Edit 2021.11.03. SeokUn ( Time Check )
+
+    // std::chrono::steady_clock::time_point t1 = std::chrono::steady_clock::now();
+  
     Track();
+
+    // std::chrono::steady_clock::time_point t2 = std::chrono::steady_clock::now();
+    // double ttrack = std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1).count();
+
+    // FILE * fp_ = fopen("/home/misoyuri/Desktop/Time_Check/O2RB_tracking.csv", "a");
+    // fprintf(fp_, "%lu, %lf\n", mCurrentFrame.mnId, ttrack);
+    // fclose(fp_);
 
     return mCurrentFrame.mTcw.clone();
 }
@@ -426,8 +440,15 @@ void Tracking::Track()
         mlbLost.push_back(mState == LOST);
     }
 
-    if (mState == OK)
+    if(mState==OK){
         frame_counter++;
+        if(tracked_started_flag){
+            frame_track_started = mCurrentFrame.mnId;
+            tracked_started_flag = false;
+        } 
+    }
+    else if(mState == LOST)
+        frame_lost_counter++;
 }
 
 
@@ -740,6 +761,12 @@ void Tracking::UpdateLastFrame()
 
 bool Tracking::TrackWithMotionModel()
 {
+    // Edit 2021.11.03. SeokUn ( Time Check )
+
+    // std::chrono::steady_clock::time_point t1 = std::chrono::steady_clock::now();
+  
+    /////
+
     ORBmatcher matcher(0.9, false);
 
     // Update last frame pose according to its reference keyframe
@@ -796,6 +823,18 @@ bool Tracking::TrackWithMotionModel()
         mbVO = nmatchesMap < 10;
         return nmatches > 20;
     }
+
+    ////////
+
+    // std::chrono::steady_clock::time_point t2 = std::chrono::steady_clock::now();
+    // double ttrack = std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1).count();
+
+    // FILE * fp_ = fopen("/home/misoyuri/Desktop/Time_Check/O2RB_feature_Matching.csv", "a");
+    // fprintf(fp_, "%lu, %lf\n", mCurrentFrame.mnId, ttrack);
+    // fclose(fp_);
+
+    ///////
+
 
     // cout << "nmatches: " << nmatches << "\tnmatchesMap: " << nmatchesMap << endl;
     return nmatchesMap >= 10;

@@ -15,31 +15,90 @@
 using namespace std;
 using namespace cv;
 unsigned int frame_counter;
+unsigned int frame_lost_counter;
+unsigned int frame_track_started;
+
 unsigned int HD;
 unsigned int goodmatch;
 unsigned int DN;
 unsigned int MapN;
 extern float res_time;
 
+// #define INDOOR_STATIC
+// #define INDOOR_DYNAMIC
+// #define OUTDOOR_STATIC
+// #define OUTDOOR_STATIC2
+// #define OUTDOOR_ROTATION
+#define OUTDOOR_LARGE_LOOP
+
 void LoadImages(const string &strFile, vector<string> &vstrImageFilenames, vector<double> &vTimestamps);
 
 int main(int argc, char **argv)
 {
     frame_counter = 0;
-    string path_to_vocabulary = "/home/oooony/바탕화면/jiwon/fisheye_ORB_SLAM/Vocabulary/ORBvoc.txt";
-    string path_to_settings = "/home/oooony/바탕화면/dataset/Config/lafida_cam0_params.yaml";
+    frame_lost_counter = 0;
+    string path_to_vocabulary = "../../Vocabulary/ORBvoc.txt";
+    string path_to_settings = "../../Config/lafida_cam0_params.yaml";
 
-    // std::string fisheyeImgPath = "/home/oooony/바탕화면/dataset/outdoor_rotation/imgs/cam0/";
-    // std::ifstream fin("/home/oooony/바탕화면/dataset/outdoor_rotation/images_and_timestamps.txt");
-
+    #ifdef INDOOR_STATIC
     ///indoor_static
-    ///indoor_dynamic
-    ///outdoor_static
-    std::string fisheyeImgPath = "/home/oooony/바탕화면/dataset/outdoor_static/imgs/cam0/";      ///
-    std::ifstream fin("/home/oooony/바탕화면/dataset/outdoor_static/images_and_timestamps.txt"); ///
-    std::string perfSavingPath("/home/oooony/바탕화면/exp/outdoor_static/data_fish.txt");        ///
+    std::string fisheyeImgPath = "/home/misoyuri/Desktop/Data/Squence/Lafida/indoor_static/imgs/cam0/"; ///
+    std::ifstream fin("/home/misoyuri/Desktop/Data/Squence/Lafida/indoor_static/images_and_timestamps.txt"); ///
+    // std::string perfSavingPath("/home/misoyuri/Desktop/Time_Check/o2rb_perf.txt"); ///
+    std::string perfSavingPath("/home/misoyuri/Desktop/Data/Test_Log/indoor_static/o2rb/o2rb_perf.txt"); ///
+    std::string filepath_time = "/home/misoyuri/Desktop/Data/Test_Log/indoor_static/o2rb/LFOV_time.txt";
+    std::string trajSavingPath("/home/misoyuri/Desktop/Data/Test_Log/indoor_static/o2rb/o2rb_KeyFrameTrajectory.txt");
+    #endif
 
-    //  /home/oooony/바탕화면/dataset/sequence_11
+    #ifdef INDOOR_DYNAMIC
+    ///indoor_dynamic
+    std::string fisheyeImgPath = "/home/misoyuri/Desktop/Data/Squence/Lafida/indoor_dynamic/imgs/cam0/"; ///
+    std::ifstream fin("/home/misoyuri/Desktop/Data/Squence/Lafida/indoor_dynamic/images_and_timestamps.txt"); ///
+    // std::string perfSavingPath("/home/misoyuri/Desktop/Time_Check/o2rb_perf.txt"); ///
+    std::string perfSavingPath("/home/misoyuri/Desktop/Data/Log/indoor_dynamic/o2rb/o2rb_perf.txt"); ///
+    std::string filepath_time = "/home/misoyuri/Desktop/Data/Test_Log/indoor_dynamic/o2rb/LFOV_time.txt";
+    std::string trajSavingPath("/home/misoyuri/Desktop/Data/Test_Log/indoor_dynamic/o2rb/o2rb_KeyFrameTrajectory.txt");
+    #endif
+    
+    #ifdef OUTDOOR_STATIC
+    ///outdoor_static     
+    std::string fisheyeImgPath = "/home/misoyuri/Desktop/Data/Squence/Lafida/outdoor_static/imgs/cam0/"; ///
+    std::ifstream fin("/home/misoyuri/Desktop/Data/Squence/Lafida/outdoor_static/images_and_timestamps.txt"); ///
+    // std::string perfSavingPath("/home/misoyuri/Desktop/Time_Check/o2rb_perf.txt"); ///
+    std::string perfSavingPath("/home/misoyuri/Desktop/Data/Test_Log/outdoor_static/o2rb/o2rb_perf.txt"); ///
+    std::string filepath_time = "/home/misoyuri/Desktop/Data/Test_Log/outdoor_static/o2rb/LFOV_time.txt";
+    std::string trajSavingPath("/home/misoyuri/Desktop/Data/Test_Log/outdoor_static/o2rb/o2rb_KeyFrameTrajectory.txt");
+    #endif
+
+    #ifdef OUTDOOR_STATIC2
+    ///outdoor_static2
+    std::string fisheyeImgPath = "/home/misoyuri/Desktop/Data/Squence/Lafida/outdoor_static2/imgs/cam0/"; ///
+    std::ifstream fin("/home/misoyuri/Desktop/Data/Squence/Lafida/outdoor_static2/images_and_timestamps.txt"); ///
+    // std::string perfSavingPath("/home/misoyuri/Desktop/Time_Check/o2rb_perf.txt"); ///
+    std::string perfSavingPath("/home/misoyuri/Desktop/Data/Test_Log/outdoor_static2/o2rb/o2rb_perf.txt"); ///
+    std::string filepath_time = "/home/misoyuri/Desktop/Data/Test_Log/outdoor_static2/o2rb/LFOV_time.txt";
+    std::string trajSavingPath("/home/misoyuri/Desktop/Data/Test_Log/outdoor_static2/o2rb/o2rb_KeyFrameTrajectory.txt");
+    #endif
+
+    #ifdef OUTDOOR_ROTATION
+    ///outdoor_rotation
+    std::string fisheyeImgPath = "/home/misoyuri/Desktop/Data/Squence/Lafida/outdoor_rotation/imgs/cam0/"; ///
+    std::ifstream fin("/home/misoyuri/Desktop/Data/Squence/Lafida/outdoor_rotation/images_and_timestamps.txt"); ///
+    // std::string perfSavingPath("/home/misoyuri/Desktop/Time_Check/o2rb_perf.txt"); ///
+    std::string perfSavingPath("/home/misoyuri/Desktop/Data/Test_Log/outdoor_rotation/o2rb/o2rb_perf.txt"); ///
+    std::string filepath_time = "/home/misoyuri/Desktop/Data/Test_Log/outdoor_rotation/o2rb/LFOV_time.txt";
+    std::string trajSavingPath("/home/misoyuri/Desktop/Data/Test_Log/outdoor_rotation/o2rb/o2rb_KeyFrameTrajectory.txt");
+    #endif
+
+    #ifdef OUTDOOR_LARGE_LOOP
+    ///outdoor_large_loop
+    std::string fisheyeImgPath = "/home/misoyuri/Desktop/Data/Squence/Lafida/outdoor_large_loop/imgs/cam0/"; ///
+    std::ifstream fin("/home/misoyuri/Desktop/Data/Squence/Lafida/outdoor_large_loop/images_and_timestamps.txt"); ///
+    // std::string perfSavingPath("/home/misoyuri/Desktop/Time_Check/o2rb_perf.txt"); ///
+    std::string perfSavingPath("/home/misoyuri/Desktop/Data/Test_Log/outdoor_large_loop/o2rb/o2rb_perf.txt"); ///
+    std::string filepath_time = "/home/misoyuri/Desktop/Data/Test_Log/outdoor_large_loop/o2rb/LFOV_time.txt";
+    std::string trajSavingPath("/home/misoyuri/Desktop/Data/Test_Log/outdoor_large_loop/o2rb/o2rb_KeyFrameTrajectory.txt");
+    #endif
 
     // Retrieve paths to images
     std::vector<std::string> fisheyeImgNames;
@@ -59,7 +118,7 @@ int main(int argc, char **argv)
         fisheyeImgNames.push_back(name);
     }
 
-    Mat mask = imread("/home/oooony/바탕화면/dataset/mask/lafida_mask.png", IMREAD_GRAYSCALE);
+    Mat mask = imread("/home/misoyuri/Desktop/Data/Squence/Lafida/lafida_mask_fish.png", IMREAD_GRAYSCALE);
     const int imageCnt = fisheyeImgNames.size();
     std::cout << "find " << imageCnt << " images" << std::endl;
 
@@ -67,7 +126,6 @@ int main(int argc, char **argv)
     vector<float> vTimesTrack;
     vTimesTrack.resize(imageCnt);
 
-    string filepath_time = "/home/oooony/바탕화면/LFOV_time.txt";
     ofstream writeFile(filepath_time.data());
 
     // Create SLAM system. It initializes all system threads and gets ready to process frames.
@@ -91,9 +149,11 @@ int main(int argc, char **argv)
     unsigned int avg_hd = 0;
     unsigned int avg_DN = 0;
 
-    int ni = 500;
-    while (true)
-    {
+    int ni = 0;
+    while (true) {
+        /* time */
+        std::chrono::steady_clock::time_point t1 = std::chrono::steady_clock::now();
+
         avg_cnt++;
         //if (ni == 200)
         //     break;
@@ -108,6 +168,7 @@ int main(int argc, char **argv)
                  << "Failed to read camera" << endl;
             break;
         }
+
         if (ni == fisheyeImgNames.size())
         {
             cout << "frame end" << endl;
@@ -115,8 +176,6 @@ int main(int argc, char **argv)
         }
         
 
-        /* time */
-        std::chrono::steady_clock::time_point t1 = std::chrono::steady_clock::now();
         // Pass the image to the SLAM system
         SLAM.TrackMonocular(im, mask, vTimestamps[ni], LUT);
         std::chrono::steady_clock::time_point t2 = std::chrono::steady_clock::now();
@@ -171,10 +230,12 @@ int main(int argc, char **argv)
     f << "median tracking time: " << vTimesTrack[imageCnt / 2] << endl;
     f << "mean tracking time: " << totaltime / imageCnt << endl;
     f << "tracking frames/ total frames: " << frame_counter << "/ " << imageCnt << " " << static_cast<float>(frame_counter) / imageCnt << std::endl;
+    f << "lost frames/ total frames: " << frame_lost_counter << "/ " << imageCnt << " " << static_cast<float>(frame_lost_counter) / imageCnt << std::endl;
+    f << "track started frame: " << frame_track_started << std::endl;
+    
     f.close();
 
     // Save camera trajectory
-    std::string trajSavingPath("/home/oooony/바탕화면/exp/traj/fish/lafida_KeyFrameTrajectory.txt");
     if (trajSavingPath.empty())
         trajSavingPath = std::string("KeyFrameTrajectory.txt");
     SLAM.SaveKeyFrameTrajectoryTUM(trajSavingPath);

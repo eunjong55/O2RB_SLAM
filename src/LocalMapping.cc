@@ -24,7 +24,7 @@
 #include "Optimizer.h"
 
 #include<mutex>
-
+#include <unistd.h>
 
 // #define loc_test
 
@@ -59,6 +59,9 @@ void LocalMapping::Run()
         // Check if there are keyframes in the queue
         if(CheckNewKeyFrames())
         {
+            // Edit 2021.11.03. SeokUn ( Time Check )
+            // std::chrono::steady_clock::time_point t1 = std::chrono::steady_clock::now();
+
             // BoW conversion and insertion in Map  ///KeyFrame Insertion
             ProcessNewKeyFrame(); ///
 
@@ -110,10 +113,18 @@ void LocalMapping::Run()
                 }
 
                 // Check redundant local Keyframes  ///local Keyframe culling
-                KeyFrameCulling();///
+                // KeyFrameCulling();///
             }
 
             // mpLoopCloser->InsertKeyFrame(mpCurrentKeyFrame);
+
+            // std::chrono::steady_clock::time_point t2 = std::chrono::steady_clock::now();
+            // double ttrack = std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1).count();
+
+            // FILE * fp_ = fopen("/home/misoyuri/Desktop/Time_Check/O2RB_Mapping.csv", "a");
+            // fprintf(fp_, "%lu, %lf\n", mpCurrentKeyFrame->mnId, ttrack);
+            // fclose(fp_);
+
         }
         else if(Stop())
         {
@@ -277,8 +288,23 @@ int LocalMapping::CreateNewMapPoints()
 
         // Search matches that fullfil epipolar constraint
         vector<pair<size_t,size_t> > vMatchedIndices;
+
+
+         // Edit 2021.11.03. SeokUn ( Time Check )
+
+        // std::chrono::steady_clock::time_point t1 = std::chrono::steady_clock::now();
+        
         // matcher.SearchForTriangulation(mpCurrentKeyFrame,pKF2,F12,vMatchedIndices,false); 
         matcher.SearchForTriangulation(mpCurrentKeyFrame,pKF2,E12,vMatchedIndices,false); /* sphere */
+
+        // std::chrono::steady_clock::time_point t2 = std::chrono::steady_clock::now();
+        // double ttrack = std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1).count();
+
+        // FILE * fp_ = fopen("/home/misoyuri/Desktop/Time_Check/O2RB_traiangle.csv", "a");
+        // fprintf(fp_, "%lu, %lf\n", mpCurrentKeyFrame->mnId, ttrack);
+        // fclose(fp_);
+
+        ///
 
         cv::Mat Rcw2 = pKF2->GetRotation();
         cv::Mat Rwc2 = Rcw2.t();
